@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Team Balancer Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab.active {
+            background-color: #fff;
+            border-bottom: 1px solid #fff;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .player-list, .team-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .player-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            position: relative;
+            width: 140px;
+        }
+        .player-card.selected {
+            background-color: #e0e0e0;
+        }
+        .player-card.goalkeeper {
+            background-color: #ffecb3;
+        }
+        .player-card.high-attendance {
+            border-left: 4px solid #4caf50;
+        }
+        .player-card.low-attendance {
+            border-left: 4px solid #f44336;
+        }
+        .team {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 200px;
+            background-color: #f5f5f5;
+        }
+        .team-a {
+            background-color: #e3f2fd;
+        }
+        .team-b {
+            background-color: #ffebee;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .form {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .form div {
+            margin-bottom: 10px;
+        }
+        .stats {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            color: red;
+            font-size: 16px;
+        }
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .team-title {
+            margin: 0;
+        }
+        .player-section {
+            margin-top: 10px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, select {
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .search-box {
+            margin-bottom: 15px;
+        }
+        .instructions {
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .sort-controls {
+            margin-bottom: 15px;
+        }
+        .attendance-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .high-attendance {
+            background-color: #4caf50;
+        }
+        .medium-attendance {
+            background-color: #ff9800;
+        }
+        .low-attendance {
+            background-color: #f44336;
+        }
+        .match-history {
+            margin-top: 20px;
+        }
+        .match-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .score {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .captain-picker {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .captain-selection {
+            margin-top: 15px;
+        }
+        .turn-indicator {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2196f3;
+        }
+        .goal-tracker {
+            margin-top: 10px;
+        }
+        .incremental-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Football Team Balancer Pro</h1>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="players">Players</div>
+        <div class="tab" data-tab="game">Game Day</div>
+        <div class="tab" data-tab="matches">Match History</div>
+        <div class="tab" data-tab="stats">Statistics</div>
+    </div>
+    
+    <!-- PLAYERS TAB -->
+    <div class="tab-content active" id="players-tab">
+        <div class="instructions">
+            <p><strong>Player Management:</strong> Add all your regular players with their skill ratings. Players with higher attendance are more likely to be invited to games.</p>
+        </div>
+        
+        <div class="form">
+            <h2>Add Player</h2>
+            <div>
+                <label for="playerName">Name:</label>
+                <input type="text" id="playerName">
+            </div>
+            <div>
+                <label for="playerRating">Skill Rating (1-10):</label>
+                <input type="number" id="playerRating" min="1" max="10" value="5">
+            </div>
+            <div>
+                <label for="playerPosition">Primary Position:</label>
+                <select id="playerPosition">
+                    <option value="field">Field Player</option>
+                    <option value="goalkeeper">Goalkeeper</option>
+                    <option value="both">Both</option>
+                </select>
+            </div>
+            <button id="addPlayer">Add Player</button>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchPlayers" placeholder="Search players...">
+        </div>
+        
+        <div class="sort-controls">
+            <label>Sort by: </label>
+            <select id="sortPlayers">
+                <option value="name">Name</option>
+                <option value="rating">Rating (High to Low)</option>
+                <option value="attendance">Attendance (High to Low)</option>
+            </select>
+        </div>
+        
+        <h2>Player Database (<span id="playerCount">0</span>)</h2>
+        <div class="player-list" id="playerList"></div>
+        
+        <div class="controls">
+            <button id="saveToFile">Export Player Database</button>
+            <button id="loadFromFile">Import Player Database</button>
+            <input type="file" id="fileInput" style="display: none">
+        </div>
+    </div>
+    
+    <!-- GAME DAY TAB -->
+    <div class="tab-content" id="game-tab">
+        <div class="instructions">
+            <p><strong>Game Day:</strong> Select today's available players and either balance teams automatically or use the captain pick simulation.</p>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchGamePlayers" placeholder="Search players...">
+        </div>
+        
+        <h2>Select Available Players</h2>
+        <div class="player-list" id="availablePlayerList"></div>
+        
+        <div class="controls">
+            <button id="selectAll">Select All</button>
+            <button id="clearSelection">Clear Selection</button>
+            <button id="balanceTeams">Balance Teams Automatically</button>
+            <button id="captainMode">Captain Pick Mode</button>
+            <button id="resetTeams">Reset Teams</button>
+        </div>
+        
+        <div class="captain-picker" id="captainPicker" style="display: none;">
+            <h3>Captain Pick Mode</h3>
+            <div>
+                <label>Captain Team A: </label>
+                <select id="captainA"></select>
+            </div>
+            <div>
+                <label>Captain Team B: </label>
+                <select id="captainB"></select>
+            </div>
+            <button id="startPicking">Start Picking</button>
+            
+            <div class="captain-selection" id="captainSelection" style="display: none;">
+                <div class="turn-indicator" id="turnIndicator">Team A Captain's Turn</div>
+                <div class="player-list" id="pickablePlayerList"></div>
+            </div>
+        </div>
+        
+        <h2>Teams</h2>
+        <div class="team-container">
+            <div class="team team-a" id="teamA">
+                <div class="team-header">
+                    <h3 class="team-title">Team A</h3>
+                    <div>
+                        <label for="teamAScore">Score: </label>
+                        <input type="number" id="teamAScore" min="0" value="0" style="width: 60px;">
+                    </div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Starting Players</div>
+                    <div id="teamAStarters"></div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Reserves</div>
+                    <div id="teamAReserves"></div>
+                </div>
+                <div class="stats" id="teamAStats"></div>
+            </div>
+            <div class="team team-b" id="teamB">
+                <div class="team-header">
+                    <h3 class="team-title">Team B</h3>
+                    <div>
+                        <label for="teamBScore">Score: </label>
+                        <input type="number" id="teamBScore" min="0" value="0" style="width: 60px;">
+                    </div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Starting Players</div>
+                    <div id="teamBStarters"></div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Reserves</div>
+                    <div id="teamBReserves"></div>
+                </div>
+                <div class="stats" id="teamBStats"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="recordMatch">Record Match Result</button>
+        </div>
+    </div>
+    
+    <!-- MATCH HISTORY TAB -->
+    <div class="tab-content" id="matches-tab">
+        <h2>Match History</h2>
+        <div id="matchHistory" class="match-history"></div>
+    </div>
+    
+    <!-- STATISTICS TAB -->
+    <div class="tab-content" id="stats-tab">
+        <h2>Player Statistics</h2>
+        <div class="search-box">
+            <input type="text" id="searchStatsPlayers" placeholder="Search players...">
+        </div>
+        <div id="playerStats"></div>
+    </div>
+
+    <script>
+        // Data structures
+        let allPlayers = JSON.parse(localStorage.getItem('footballPlayers')) || [];
+        let matchHistory = JSON.parse(localStorage.getItem('matchHistory')) || [];
+        let selectedPlayers = [];
+        let teamA = {
+            starters: [],
+            reserves: [],
+            captain: null
+        };
+        let teamB = {
+            starters: [],
+            reserves: [],
+            captain: null
+        };
+        let captainMode = false;
+        let currentTeamTurn = 'A';
+        let unpickedPlayers = [];
+        
+        // DOM elements - Tabs
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // DOM elements - Players
+        const playerListEl = document.getElementById('playerList');
+        const searchEl = document.getElementById('searchPlayers');
+        const sortEl = document.getElementById('sortPlayers');
+        const playerCountEl = document.getElementById('playerCount');
+        const fileInputEl = document.getElementById('fileInput');
+        
+        // DOM elements - Game Day
+        const availablePlayerListEl = document.getElementById('availablePlayerList');
+        const searchGameEl = document.getElementById('searchGamePlayers');
+        const teamAStartersEl = document.getElementById('teamAStarters');
+        const teamBStartersEl = document.getElementById('teamBStarters');
+        const teamAReservesEl = document.getElementById('teamAReserves');
+        const teamBReservesEl = document.getElementById('teamBReserves');
+        const teamAStatsEl = document.getElementById('teamAStats');
+        const teamBStatsEl = document.getElementById('teamBStats');
+        const captainPickerEl = document.getElementById('captainPicker');
+        const captainSelectionEl = document.getElementById('captainSelection');
+        const captainAEl = document.getElementById('captainA');
+        const captainBEl = document.getElementById('captainB');
+        const turnIndicatorEl = document.getElementById('turnIndicator');
+        const pickablePlayerListEl = document.getElementById('pickablePlayerList');
+        
+        // DOM elements - Match History
+        const matchHistoryEl = document.getElementById('matchHistory');
+        
+        // DOM elements - Statistics
+        const playerStatsEl = document.getElementById('playerStats');
+        const searchStatsEl = document.getElementById('searchStatsPlayers');
+        
+        // Initialize
+        renderPlayerList();
+        renderMatchHistory();
+        updatePlayerCount();
+        
+        // Tab Navigation
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+                
+                // Refresh tab content when switching
+                if(tab.dataset.tab === 'game') {
+                    renderAvailablePlayers();
+                } else if(tab.dataset.tab === 'matches') {
+                    renderMatchHistory();
+                } else if(tab.dataset.tab === 'stats') {
+                    renderPlayerStats();
+                }
+            });
+        });
+        
+        // Event Listeners - Players Tab
+        document.getElementById('addPlayer').addEventListener('click', addPlayer);
+        document.getElementById('saveToFile').addEventListener('click', saveToFile);
+        document.getElementById('loadFromFile').addEventListener('click', () => fileInputEl.click());
+        fileInputEl.addEventListener('change', loadFromFile);
+        searchEl.addEventListener('input', () => renderPlayerList());
+        sortEl.addEventListener('change', () => renderPlayerList());
+        
+        // Event Listeners - Game Day Tab
+        document.getElementById('selectAll').addEventListener('click', selectAllPlayers);
+        document.getElementById('clearSelection').addEventListener('click', clearSelection);
+        document.getElementById('balanceTeams').addEventListener('click', balanceTeams);
+        document.getElementById('captainMode').addEventListener('click', toggleCaptainMode);
+        document.getElementById('resetTeams').addEventListener('click', resetTeams);
+        document.getElementById('startPicking').addEventListener('click', startCaptainPicking);
+        document.getElementById('recordMatch').addEventListener('click', recordMatch);
+        searchGameEl.addEventListener('input', () => renderAvailablePlayers());
+        
+        // Event Listeners - Statistics Tab
+        searchStatsEl.addEventListener('input', () => renderPlayerStats());
+        
+        // Functions - Player Management
+        function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            const rating = parseInt(document.getElementById('playerRating').value);
+            const position = document.getElementById('playerPosition').value;
+            
+            if (!name) return alert('Please enter a player name');
+            
+            const player = {
+                id: Date.now(),
+                name: name,
+                rating: rating,
+                position: position,
+                attendance: 0,
+                matches: 0,
+                wins: 0,
+                losses: 0,
+                draws: 0,
+                goals: 0,
+                assists: 0
+            };
+            
+            allPlayers.push(player);
+            savePlayersToStorage();
+            renderPlayerList();
+            updatePlayerCount();
+            
+            // Clear form
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerRating').value = 5;
+            document.getElementById('playerPosition').value = 'field';
+        }
+        
+        function renderPlayerList() {
+            playerListEl.innerHTML = '';
+            
+            const searchTerm = searchEl.value.toLowerCase();
+            let filteredPlayers = allPlayers.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            );
+            
+            // Sort players
+            const sortBy = sortEl.value;
+            if (sortBy === 'name') {
+                filteredPlayers.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortBy === 'rating') {
+                filteredPlayers.sort((a, b) => b.rating - a.rating);
+            } else if (sortBy === 'attendance') {
+                filteredPlayers.sort((a, b) => b.attendance - a.attendance);
+            }
+            
+            filteredPlayers.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${attendanceClass}`;
+                playerCard.innerHTML = `
+                    <span class="delete-btn" data-id="${player.id}">×</span>
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                    <br>Attendance: ${player.attendance} games
+                `;
+                
+                // Delete button
+                const deleteBtn = playerCard.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePlayer(player.id);
+                });
+                
+                playerListEl.appendChild(playerCard);
+            });
+        }
+        
+        function deletePlayer(id) {
+            if (confirm('Are you sure you want to delete this player?')) {
+                allPlayers = allPlayers.filter(p => p.id !== id);
+                selectedPlayers = selectedPlayers.filter(p => p.id !== id);
+                savePlayersToStorage();
+                renderPlayerList();
+                renderAvailablePlayers();
+                renderTeams();
+                updatePlayerCount();
+            }
+        }
+        
+        // Functions - Game Day
+        function renderAvailablePlayers() {
+            availablePlayerListEl.innerHTML = '';
+            
+            const searchTerm = searchGameEl.value.toLowerCase();
+            const filteredPlayers = allPlayers.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            ).sort((a, b) => b.attendance - a.attendance);
+            
+            filteredPlayers.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                const isSelected = selectedPlayers.some(p => p.id === player.id);
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${isSelected ? ' selected' : ''}${attendanceClass}`;
+                playerCard.innerHTML = `
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                    <br>Attendance: ${player.attendance} games
+                `;
+                
+                playerCard.addEventListener('click', () => togglePlayerSelection(player));
+                availablePlayerListEl.appendChild(playerCard);
+            });
+        }
+        
+        function togglePlayerSelection(player) {
+            const index = selectedPlayers.findIndex(p => p.id === player.id);
+            
+            if (index === -1) {
+                selectedPlayers.push(player);
+            } else {
+                selectedPlayers.splice(index, 1);
+            }
+            
+            renderAvailablePlayers();
+            updateCaptainSelects();
+        }
+        
+        function selectAllPlayers() {
+            selectedPlayers = [...allPlayers];
+            renderAvailablePlayers();
+            updateCaptainSelects();
+        }
+        
+        function clearSelection() {
+            selectedPlayers = [];
+            renderAvailablePlayers();
+            updateCaptainSelects();
+        }
+        
+        function updateCaptainSelects() {
+            // Update captain dropdowns
+            captainAEl.innerHTML = '<option value="">Select Captain</option>';
+            captainBEl.innerHTML = '<option value="">Select Captain</option>';
+            
+            selectedPlayers.forEach(player => {
+                const optionA = document.createElement('option');
+                optionA.value = player.id;
+                optionA.textContent = player.name;
+                captainAEl.appendChild(optionA);
+                
+                const optionB = document.createElement('option');
+                optionB.value = player.id;
+                optionB.textContent = player.name;
+                captainBEl.appendChild(optionB);
+            });
+        }
+        
+        function toggleCaptainMode() {
+            if (selectedPlayers.length < 6) {
+                return alert('Please select at least 6 players');
+            }
+            
+            captainMode = true;
+            captainPickerEl.style.display = 'block';
+            updateCaptainSelects();
+        }
+        
+        function startCaptainPicking() {
+            const captainAId = captainAEl.value;
+            const captainBId = captainBEl.value;
+            
+            if (!captainAId || !captainBId) {
+                return alert('Please select captains for both teams');
+            }
+            
+            if (captainAId === captainBId) {
+                return alert('Please select different captains for each team');
+            }
+            
+            // Reset teams
+            teamA = {
+                starters: [],
+                reserves: [],
+                captain: null
+            };
+            
+            teamB = {
+                starters: [],
+                reserves: [],
+                captain: null
+            };
+            
+            // Set captains
+            const captainA = selectedPlayers.find(p => p.id.toString() === captainAId);
+            const captainB = selectedPlayers.find(p => p.id.toString() === captainBId);
+            
+            teamA.starters.push(captainA);
+            teamA.captain = captainA;
+            
+            teamB.starters.push(captainB);
+            teamB.captain = captainB;
+            
+            // Start picking
+            currentTeamTurn = 'A'; // Team A starts
+            unpickedPlayers = selectedPlayers.filter(p => 
+                p.id !== captainA.id && p.id !== captainB.id
+            );
+            
+            captainSelectionEl.style.display = 'block';
+            updateTurnIndicator();
+            renderPickablePlayers();
+            renderTeams();
+        }
+        
+        function updateTurnIndicator() {
+            const currentCaptain = currentTeamTurn === 'A' ? teamA.captain.name : teamB.captain.name;
+            turnIndicatorEl.textContent = `Team ${currentTeamTurn} Captain's Turn (${currentCaptain})`;
+        }
+        
+        function renderPickablePlayers() {
+            pickablePlayerListEl.innerHTML = '';
+            
+            unpickedPlayers.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${attendanceClass}`;
+                playerCard.innerHTML = `
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                `;
+                
+                playerCard.addEventListener('click', () => pickPlayer(player));
+                pickablePlayerListEl.appendChild(playerCard);
+            });
+        }
+        
+        function pickPlayer(player) {
+            // Add to current team
+            const currentTeam = currentTeamTurn === 'A' ? teamA : teamB;
+            
+            if (currentTeam.starters.length < 6) {
+                currentTeam.starters.push(player);
+            } else {
+                currentTeam.reserves.push(player);
+            }
+            
+            // Remove from unpicked
+            unpickedPlayers = unpickedPlayers.filter(p => p.id !== player.id);
+            
+            // Switch turns
+            currentTeamTurn = currentTeamTurn === 'A' ? 'B' : 'A';
+            
+            // Update UI
+            updateTurnIndicator();
+            renderPickablePlayers();
+            renderTeams();
+            
+            // Check if picking is complete
+            if (unpickedPlayers.length === 0) {
+                alert('All players have been picked!');
+                captainSelectionEl.style.display = 'none';
+            }
+        }
+        
+        function balanceTeams() {
+            if (selectedPlayers.length < 6) {
+                return alert('Please select at least 6 players (minimum for 3v3)');
+            }
+            
+            // Reset teams
+            teamA = {
+                starters: [],
+                reserves: [],
+                captain: null
+            };
+            
+            teamB = {
+                starters: [],
+                reserves: [],
+                captain: null
+            };
+            
+            // Sort by rating, highest first
+            const sortedPlayers = [...selectedPlayers].sort((a, b) => b.rating - a.rating);
+            
+            // Separate goalkeepers
+            const goalkeepers = sortedPlayers.filter(p => p.position === 'goalkeeper' || p.position === 'both');
+            let fieldPlayers = sortedPlayers.filter(p => p.position === 'field' || (p.position === 'both' && goalkeepers.length > 2));
+            
+            // Add goalkeeper-capable players to fieldPlayers if not needed as goalkeepers
+            if (goalkeepers.length > 2) {
+                const excessKeepers = goalkeepers.slice(2);
+                fieldPlayers = [...fieldPlayers, ...excessKeepers];
+            }
+            
+            // Assign goalkeepers first, one to each team if available
+            if (goalkeepers.length >= 2) {
+                teamA.starters.push(goalkeepers[0]);
+                teamB.starters.push(goalkeepers[1]);
+            } else if (goalkeepers.length === 1) {
+                teamA.starters.push(goalkeepers[0]);
+                alert('Warning: Only one goalkeeper available. Team B will need an outfield player as goalkeeper.');
+            } else {
+                alert('Warning: No goalkeepers available. Both teams will need outfield players as goalkeepers.');
+            }
+            
+            // Sort field players again by rating
+            fieldPlayers.sort((a, b) => b.rating - a.rating);
+            
+            // Distribute field players using algorithm (alternating with team strength balancing)
+            let teamAStrength = getTotalRating(teamA.starters);
+            let teamBStrength = getTotalRating(teamB.starters);
+            
+            for (let i = 0; i < fieldPlayers.length; i++) {
+                const player = fieldPlayers[i];
+                
+                // Determine which team gets the player based on current strength
+                let targetTeam;
+                if (teamAStrength < teamBStrength) {
+                    targetTeam = teamA;
+                    teamAStrength += player.rating;
+                } else {
+                    targetTeam = teamB;
+                    teamBStrength += player.rating;
+                }
+                
+                // Add to starters or reserves
+                if (targetTeam.starters.length < 6) {
+                    targetTeam.starters.push(player);
+                } else {
+                    targetTeam.reserves.push(player);
+                }
+            }
+            
+            captainMode = false;
+            captainPickerEl.style.display = 'none';
+            captainSelectionEl.style.display
+
+
+captainSelectionEl.style.display = 'none';
+            renderTeams();
+        }
+        
+        function renderTeams() {
+            teamAStartersEl.innerHTML = '';
+            teamBStartersEl.innerHTML = '';
+            teamAReservesEl.innerHTML = '';
+            teamBReservesEl.innerHTML = '';
+            
+            renderTeamPlayers(teamA.starters, teamAStartersEl);
+            renderTeamPlayers(teamB.starters, teamBStartersEl);
+            renderTeamPlayers(teamA.reserves, teamAReservesEl);
+            renderTeamPlayers(teamB.reserves, teamBReservesEl);
+            
+            // Update team stats
+            updateTeamStats();
+        }
+        
+        function renderTeamPlayers(players, container) {
+            players.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${attendanceClass}`;
+                playerCard.innerHTML = `
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                `;
+                
+                container.appendChild(playerCard);
+            });
+        }
+        
+        function updateTeamStats() {
+            const teamARating = getTotalRating(teamA.starters) / (teamA.starters.length || 1);
+            const teamBRating = getTotalRating(teamB.starters) / (teamB.starters.length || 1);
+            
+            teamAStatsEl.innerHTML = `
+                <div>Average Rating: ${teamARating.toFixed(1)}</div>
+                <div>Players: ${teamA.starters.length + teamA.reserves.length}</div>
+            `;
+            
+            teamBStatsEl.innerHTML = `
+                <div>Average Rating: ${teamBRating.toFixed(1)}</div>
+                <div>Players: ${teamB.starters.length + teamB.reserves.length}</div>
+            `;
+        }
+        
+        function getTotalRating(players) {
+            return players.reduce((sum, player) => sum + player.rating, 0);
+        }
+        
+        function resetTeams() {
+            teamA = {
+                starters: [],
+                reserves: [],
+                captain: null
+            };
+            
+            teamB = {
+                starters: [],
+                reserves: [],
+                captain: null
+            };
+            
+            captainMode = false;
+            captainPickerEl.style.display = 'none';
+            captainSelectionEl.style.display = 'none';
+            
+            renderTeams();
+        }
+        
+        function recordMatch() {
+            if (teamA.starters.length === 0 || teamB.starters.length === 0) {
+                return alert('Please create teams before recording a match');
+            }
+            
+            const teamAScore = parseInt(document.getElementById('teamAScore').value) || 0;
+            const teamBScore = parseInt(document.getElementById('teamBScore').value) || 0;
+            
+            // Create match object
+            const match = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString(),
+                teamA: {
+                    starters: teamA.starters.map(p => p.id),
+                    reserves: teamA.reserves.map(p => p.id),
+                    score: teamAScore
+                },
+                teamB: {
+                    starters: teamB.starters.map(p => p.id),
+                    reserves: teamB.reserves.map(p => p.id),
+                    score: teamBScore
+                }
+            };
+            
+            // Update player statistics
+            const allPlayers = [...teamA.starters, ...teamA.reserves, ...teamB.starters, ...teamB.reserves];
+            
+            allPlayers.forEach(player => {
+                const playerIndex = allPlayers.findIndex(p => p.id === player.id);
+                
+                // Only update once per player
+                if (playerIndex === allPlayers.indexOf(player)) {
+                    // Update attendance
+                    player.attendance = (player.attendance || 0) + 1;
+                    player.matches = (player.matches || 0) + 1;
+                    
+                    // Update win/loss/draw
+                    const isTeamA = teamA.starters.includes(player) || teamA.reserves.includes(player);
+                    
+                    if (teamAScore > teamBScore) {
+                        if (isTeamA) player.wins = (player.wins || 0) + 1;
+                        else player.losses = (player.losses || 0) + 1;
+                    } else if (teamBScore > teamAScore) {
+                        if (isTeamA) player.losses = (player.losses || 0) + 1;
+                        else player.wins = (player.wins || 0) + 1;
+                    } else {
+                        player.draws = (player.draws || 0) + 1;
+                    }
+                }
+            });
+            
+            // Save match to history
+            matchHistory.push(match);
+            saveMatchesToStorage();
+            savePlayersToStorage();
+            
+            alert('Match recorded successfully!');
+            renderMatchHistory();
+            renderPlayerList();
+            resetTeams();
+        }
+        
+        // Functions - Match History
+        function renderMatchHistory() {
+            matchHistoryEl.innerHTML = '';
+            
+            if (matchHistory.length === 0) {
+                matchHistoryEl.innerHTML = '<p>No matches recorded yet.</p>';
+                return;
+            }
+            
+            // Sort by date, newest first
+            const sortedMatches = [...matchHistory].reverse();
+            
+            sortedMatches.forEach(match => {
+                const matchEl = document.createElement('div');
+                matchEl.className = 'match-item';
+                
+                // Get player names for display
+                const teamAStarterNames = getPlayerNamesById(match.teamA.starters);
+                const teamBStarterNames = getPlayerNamesById(match.teamB.starters);
+                
+                matchEl.innerHTML = `
+                    <div><strong>Date:</strong> ${match.date}</div>
+                    <div class="score">Team A ${match.teamA.score} - ${match.teamB.score} Team B</div>
+                    <div><strong>Team A:</strong> ${teamAStarterNames.join(', ')}</div>
+                    <div><strong>Team B:</strong> ${teamBStarterNames.join(', ')}</div>
+                `;
+                
+                matchHistoryEl.appendChild(matchEl);
+            });
+        }
+        
+        // Functions - Player Statistics
+        function renderPlayerStats() {
+            playerStatsEl.innerHTML = '';
+            
+            const searchTerm = searchStatsEl.value.toLowerCase();
+            let filteredPlayers = allPlayers.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            );
+            
+            // Sort by matches played
+            filteredPlayers.sort((a, b) => b.matches - a.matches);
+            
+            filteredPlayers.forEach(player => {
+                if (player.matches > 0) {
+                    const winRate = player.matches > 0 
+                        ? ((player.wins / player.matches) * 100).toFixed(1) 
+                        : '0.0';
+                    
+                    const playerStatsEl = document.createElement('div');
+                    playerStatsEl.className = 'match-item';
+                    playerStatsEl.innerHTML = `
+                        <h3>${player.name}</h3>
+                        <div><strong>Skill Rating:</strong> ${player.rating}/10</div>
+                        <div><strong>Matches Played:</strong> ${player.matches}</div>
+                        <div><strong>Record:</strong> ${player.wins}W - ${player.losses}L - ${player.draws}D</div>
+                        <div><strong>Win Rate:</strong> ${winRate}%</div>
+                    `;
+                    
+                    playerStatsEl.id.appendChild(playerStatsEl);
+                }
+            });
+            
+            if (playerStatsEl.children.length === 0) {
+                playerStatsEl.innerHTML = '<p>No player statistics available.</p>';
+            }
+        }
+        
+        // Helper Functions
+        function getPlayerNamesById(idArray) {
+            return idArray.map(id => {
+                const player = allPlayers.find(p => p.id === id);
+                return player ? player.name : 'Unknown Player';
+            });
+        }
+        
+        function formatPosition(position) {
+            if (position === 'field') return 'Field Player';
+            if (position === 'goalkeeper') return 'Goalkeeper';
+            if (position === 'both') return 'Field/GK';
+            return position;
+        }
+        
+        function updatePlayerCount() {
+            playerCountEl.textContent = allPlayers.length;
+        }
+        
+        function savePlayersToStorage() {
+            localStorage.setItem('footballPlayers', JSON.stringify(allPlayers));
+        }
+        
+        function saveMatchesToStorage() {
+            localStorage.setItem('matchHistory', JSON.stringify(matchHistory));
+        }
+        
+        function saveToFile() {
+            const data = {
+                players: allPlayers,
+                matches: matchHistory
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'football_team_data.json';
+            a.click();
+        }
+        
+        function loadFromFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (confirm('This will replace your current player data. Continue?')) {
+                        if (data.players) {
+                            allPlayers = data.players;
+                        }
+                        
+                        if (data.matches) {
+                            matchHistory = data.matches;
+                        }
+                        
+                        savePlayersToStorage();
+                        saveMatchesToStorage();
+                        renderPlayerList();
+                        updatePlayerCount();
+                        renderMatchHistory();
+                        alert('Data imported successfully!');
+                    }
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
