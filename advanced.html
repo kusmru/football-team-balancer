@@ -1,0 +1,3763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Team Balancer Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab.active {
+            background-color: #fff;
+            border-bottom: 1px solid #fff;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .player-list, .team-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .player-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            position: relative;
+            width: 140px;
+        }
+        .player-card.selected {
+            background-color: #e0e0e0;
+        }
+        .player-card.goalkeeper {
+            background-color: #ffecb3;
+        }
+        .player-card.high-attendance {
+            border-left: 4px solid #4caf50;
+        }
+        .player-card.low-attendance {
+            border-left: 4px solid #f44336;
+        }
+        .team {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 200px;
+            background-color: #f5f5f5;
+        }
+        .team-a {
+            background-color: #e3f2fd;
+        }
+        .team-b {
+            background-color: #ffebee;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .form {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .form div {
+            margin-bottom: 10px;
+        }
+        .stats {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            color: red;
+            font-size: 16px;
+        }
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .team-title {
+            margin: 0;
+        }
+        .player-section {
+            margin-top: 10px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, select {
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .search-box {
+            margin-bottom: 15px;
+        }
+        .instructions {
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .sort-controls {
+            margin-bottom: 15px;
+        }
+        .attendance-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .high-attendance {
+            background-color: #4caf50;
+        }
+        .medium-attendance {
+            background-color: #ff9800;
+        }
+        .low-attendance {
+            background-color: #f44336;
+        }
+        .match-history {
+            margin-top: 20px;
+        }
+        .match-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .score {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .captain-picker {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .captain-selection {
+            margin-top: 15px;
+        }
+        .turn-indicator {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2196f3;
+        }
+        .goal-tracker {
+            margin-top: 15px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        .goal-item {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: #f8f8f8;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .incremental-btn {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            margin: 0;
+            line-height: 1;
+            border-radius: 12px;
+        }
+        .comparison-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .comparison-card {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .player-compare {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            margin: 0 10px;
+            background-color: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .player-compare.left {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .player-compare.right {
+            background-color: #ffebee;
+            border-color: #f44336;
+        }
+        .player-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .player-stats {
+            text-align: left;
+            margin: 10px 0;
+        }
+        .comparison-buttons {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 15px;
+        }
+        .comparison-buttons button {
+            margin: 5px 0;
+            padding: 10px 15px;
+        }
+        .empty-comparison {
+            text-align: center;
+            padding: 40px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+        }
+        .elo-explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .invitation-system {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .invitation-system textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .invitation-system .note {
+            font-size: 0.8em;
+            font-style: italic;
+            color: #666;
+            margin-top: 10px;
+        }
+        .invitation-system button {
+            margin-top: 10px;
+        }
+        #inviteeList {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .invitee {
+            padding: 5px;
+            margin-bottom: 5px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .stats-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stats-filters > div {
+            flex: 1;
+        }
+        .stats-dashboard {
+            margin: 20px 0;
+        }
+        .stats-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stats-card {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            height: 200px;
+            margin-top: 10px;
+        }
+        .position-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 2px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            background-color: #e0e0e0;
+        }
+        .position-tag.forward {
+            background-color: #ffcdd2;
+        }
+        .position-tag.midfielder {
+            background-color: #c8e6c9;
+        }
+        .position-tag.defender {
+            background-color: #bbdefb;
+        }
+        .position-tag.goalkeeper {
+            background-color: #ffecb3;
+        }
+        .position-tag.multipraktik {
+            background-color: #e1bee7;
+        }
+        .style-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 2px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            background-color: #e0e0e0;
+        }
+        .style-tag.balanced {
+            background-color: #b2dfdb;
+        }
+        .style-tag.defensive {
+            background-color: #d1c4e9;
+        }
+        .style-tag.attacking {
+            background-color: #ffccbc;
+        }
+        .style-tag.playmaker {
+            background-color: #b3e5fc;
+        }
+        .style-tag.versatile {
+            background-color: #f0f4c3;
+        }
+        
+        /* Mobile Responsive Enhancements */
+        @media (max-width: 768px) {
+            .team-container {
+                flex-direction: column;
+            }
+            
+            .team {
+                margin-bottom: 20px;
+            }
+            
+            .player-card {
+                width: calc(50% - 15px);
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 5px;
+            }
+            
+            .tab {
+                flex: 0 0 auto;
+            }
+        }
+        
+        /* Achievement System Styles */
+        .achievement {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .achievement.gold {
+            background-color: #ffeeba;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        
+        .achievement.silver {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
+        }
+        
+        .achievement.bronze {
+            background-color: #d1c4b5;
+            border: 1px solid #c9baa6;
+            color: #6e5f50;
+        }
+        
+        /* Player Development Chart */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        /* Team Chemistry Styles */
+        .chemistry-pair {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .chemistry-score {
+            margin-left: auto;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .chemistry-high {
+            border-left-color: #4caf50;
+        }
+        
+        .chemistry-medium {
+            border-left-color: #ffc107;
+        }
+        
+        .chemistry-low {
+            border-left-color: #dc3545;
+        }
+        
+        /* Field Visualizer */
+        .football-pitch {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background-color: #7ec67e;
+            border: 2px solid white;
+            border-radius: 10px;
+            margin: 20px 0;
+            background-image: linear-gradient(#7ec67e, #65a765);
+            overflow: hidden;
+        }
+        
+        .field-line {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .center-line {
+            top: 0;
+            left: 50%;
+            height: 100%;
+            width: 2px;
+        }
+        
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+        }
+        
+        .goal-area {
+            position: absolute;
+            height: 120px;
+            width: 60px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+        
+        .left-goal {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+        
+        .right-goal {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+        }
+        
+        .player-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e3f2fd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: move;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .team-a-marker {
+            background-color: #e3f2fd;
+        }
+        
+        .team-b-marker {
+            background-color: #ffebee;
+        }
+
+        /* Export/Import Controls */
+        .data-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .data-controls button {
+            margin-right: 10px;
+        }
+        
+        /* Tournament Styles */
+        .tournament-bracket {
+            display: flex;
+            flex-direction: column;
+            margin: 20px 0;
+        }
+        
+        .tournament-round {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        
+        .tournament-match {
+            width: 200px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .tournament-team {
+            padding: 5px;
+            margin: 5px 0;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+        }
+        
+        .tournament-winner {
+            background-color: #c8e6c9;
+            border-color: #a5d6a7;
+        }
+        
+        /* Edit Player Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 600px;
+        }
+        
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover,
+        .close-modal:focus {
+            color: black;
+            text-decoration: none;
+        }
+        
+        .edit-form-group {
+            margin-bottom: 15px;
+        }
+        
+        .edit-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .edit-stats-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .edit-stats-group {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        /* Team Balance Indicator */
+        .team-balance-indicator {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .team-balance-indicator.balanced {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .team-balance-indicator.unbalanced {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Player Count Badge */
+        .player-count-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: #007bff;
+            color: white;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        /* Match Score Tracking Styles */
+        .score-tracker {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .score-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        
+        .team-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .team-name {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .score {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        
+        .score-separator {
+            font-size: 2em;
+            margin: 0 10px;
+            color: #6c757d;
+        }
+        
+        .goal-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        
+        .goal-button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .goal-button:hover {
+            background-color: #218838;
+        }
+        
+        .goal-scorer-form {
+            display: none;
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .goal-scorer-form.active {
+            display: block;
+        }
+        
+        .goal-list {
+            margin-top: 15px;
+        }
+        
+        .goal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .goal-item:last-child {
+            border-bottom: none;
+        }
+        
+        .goal-time {
+            color: #6c757d;
+            font-weight: bold;
+        }
+        
+        .match-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .match-timer {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Football Team Balancer Pro</h1>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="players">Players</div>
+        <div class="tab" data-tab="game">Game Day</div>
+        <div class="tab" data-tab="matches">Match History</div>
+        <div class="tab" data-tab="stats">Statistics</div>
+        <div class="tab" data-tab="compare">Compare Players</div>
+        <div class="tab" data-tab="player-development">Development</div>
+        <div class="tab" data-tab="achievements">Achievements</div>
+        <div class="tab" data-tab="chemistry">Chemistry</div>
+        <div class="tab" data-tab="field">Field View</div>
+        <div class="tab" data-tab="tournament">Tournament</div>
+        <div class="tab" data-tab="data">Export/Import</div>
+    </div>
+    
+    <!-- PLAYERS TAB -->
+    <div class="tab-content active" id="players-tab">
+        <div class="instructions">
+            <p><strong>Player Management:</strong> Add all your regular players with their skill ratings. Players with higher attendance are more likely to be invited to games.</p>
+        </div>
+        
+        <div class="form">
+            <h2>Add Player</h2>
+            <div>
+                <label for="playerName">Name:</label>
+                <input type="text" id="playerName">
+            </div>
+            <div>
+                <label for="playerRating">Skill Rating (1-10):</label>
+                <input type="number" id="playerRating" min="1" max="10" value="5">
+            </div>
+            <div>
+                <label for="playerPosition">Primary Position:</label>
+                <select id="playerPosition">
+                    <option value="field">Field Player</option>
+                    <option value="goalkeeper">Goalkeeper</option>
+                    <option value="both">Both</option>
+                </select>
+            </div>
+            <div>
+                <label for="playerDetailedPosition">Detailed Position:</label>
+                <select id="playerDetailedPosition">
+                    <option value="forward">Forward</option>
+                    <option value="midfielder">Midfielder</option>
+                    <option value="defender">Defender</option>
+                    <option value="multipraktik">Multipraktik (Versatile)</option>
+                </select>
+            </div>
+            <div>
+                <label for="playerStyle">Playing Style:</label>
+                <select id="playerStyle">
+                    <option value="balanced">Balanced</option>
+                    <option value="defensive">Defensive</option>
+                    <option value="attacking">Attacking</option>
+                    <option value="playmaker">Playmaker</option>
+                    <option value="versatile">Versatile</option>
+                </select>
+            </div>
+            <button id="addPlayer">Add Player</button>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchPlayers" placeholder="Search players...">
+        </div>
+        
+        <div class="sort-controls">
+            <label>Sort by: </label>
+            <select id="sortPlayers">
+                <option value="name">Name</option>
+                <option value="rating">Rating (High to Low)</option>
+                <option value="attendance">Attendance (High to Low)</option>
+            </select>
+        </div>
+        
+        <h2>Player Database (<span id="playerCount">0</span>)</h2>
+        <div class="player-list" id="playerList"></div>
+        
+        <div class="controls">
+            <button id="saveToFile">Export Player Database</button>
+            <button id="loadFromFile">Import Player Database</button>
+            <input type="file" id="fileInput" style="display: none">
+        </div>
+    </div>
+    
+    <!-- GAME DAY TAB -->
+    <div class="tab-content" id="game-tab">
+        <div class="instructions">
+            <p><strong>Game Day:</strong> Select today's available players and either balance teams automatically or use the captain pick simulation.</p>
+        </div>
+        
+        <div class="invitation-system">
+            <h3>Send Invitations</h3>
+            <div class="form">
+                <div>
+                    <label for="invitationMessage">Message:</label>
+                    <textarea id="invitationMessage" rows="3">Football game this Saturday at 6pm. Can you play? Reply YES or NO.</textarea>
+                </div>
+                <div>
+                    <label>Number of players needed:</label>
+                    <input type="number" id="playersNeeded" min="4" max="22" value="14">
+                </div>
+                <div>
+                    <label>Prioritize by:</label>
+                    <select id="invitePriority">
+                        <option value="attendance">Attendance (most games first)</option>
+                        <option value="rating">Skill Rating (highest first)</option>
+                        <option value="hybrid">Hybrid (60% attendance, 40% rating)</option>
+                    </select>
+                </div>
+                <button id="sendInvites">🔄 Simulate SMS Invites</button>
+                <p class="note">Note: This is a simulation. Connect to Twilio or another SMS service for actual message delivery.</p>
+            </div>
+            <div id="invitationResults" style="display: none;">
+                <h4>Invitation Results</h4>
+                <div id="inviteeList"></div>
+            </div>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchGamePlayers" placeholder="Search players...">
+        </div>
+        
+        <h2>Select Available Players</h2>
+        <div class="player-list" id="availablePlayerList"></div>
+        
+        <div class="controls">
+            <button id="selectAll">Select All</button>
+            <button id="clearSelection">Clear Selection</button>
+            <button id="balanceTeams">Balance Teams Automatically</button>
+            <button id="captainMode">Captain Pick Mode</button>
+            <button id="resetTeams">Reset Teams</button>
+        </div>
+        
+        <div class="captain-picker" id="captainPicker" style="display: none;">
+            <h3>Captain Pick Mode</h3>
+            <div>
+                <label>Captain Team A: </label>
+                <select id="captainA"></select>
+            </div>
+            <div>
+                <label>Captain Team B: </label>
+                <select id="captainB"></select>
+            </div>
+            <button id="startPicking">Start Picking</button>
+            
+            <div class="captain-selection" id="captainSelection" style="display: none;">
+                <div class="turn-indicator" id="turnIndicator">Team A Captain's Turn</div>
+                <div class="player-list" id="pickablePlayerList"></div>
+            </div>
+        </div>
+        
+        <h2>Teams</h2>
+        <div class="team-container">
+            <div class="team team-a" id="teamA">
+                <div class="team-header">
+                    <h3 class="team-title">Team A</h3>
+                    <div>
+                        <label for="teamAScore">Score: </label>
+                        <input type="number" id="teamAScore" min="0" value="0" style="width: 60px;">
+                    </div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Starting Players</div>
+                    <div id="teamAStarters"></div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Reserves</div>
+                    <div id="teamAReserves"></div>
+                </div>
+                <div class="stats" id="teamAStats"></div>
+                
+                <!-- Add goal tracking section -->
+                <div class="goal-tracker">
+                    <h4>Goals</h4>
+                    <div id="teamAGoals"></div>
+                    <div style="margin-top: 10px;">
+                        <select id="teamAScorer" style="width: 45%;">
+                            <option value="">Goal scorer...</option>
+                        </select>
+                        <select id="teamAAssist" style="width: 45%;">
+                            <option value="">Assist (optional)...</option>
+                        </select>
+                        <button onclick="addGoal('A')">Add Goal</button>
+                    </div>
+                </div>
+            </div>
+            <div class="team team-b" id="teamB">
+                <div class="team-header">
+                    <h3 class="team-title">Team B</h3>
+                    <div>
+                        <label for="teamBScore">Score: </label>
+                        <input type="number" id="teamBScore" min="0" value="0" style="width: 60px;">
+                    </div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Starting Players</div>
+                    <div id="teamBStarters"></div>
+                </div>
+                <div class="player-section">
+                    <div class="section-title">Reserves</div>
+                    <div id="teamBReserves"></div>
+                </div>
+                <div class="stats" id="teamBStats"></div>
+                
+                <!-- Add goal tracking section -->
+                <div class="goal-tracker">
+                    <h4>Goals</h4>
+                    <div id="teamBGoals"></div>
+                    <div style="margin-top: 10px;">
+                        <select id="teamBScorer" style="width: 45%;">
+                            <option value="">Goal scorer...</option>
+                        </select>
+                        <select id="teamBAssist" style="width: 45%;">
+                            <option value="">Assist (optional)...</option>
+                        </select>
+                        <button onclick="addGoal('B')">Add Goal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="recordMatch">Record Match Result</button>
+        </div>
+    </div>
+    
+    <!-- MATCH HISTORY TAB -->
+    <div class="tab-content" id="matches-tab">
+        <h2>Match History</h2>
+        <div id="matchHistory" class="match-history"></div>
+    </div>
+    
+    <!-- STATISTICS TAB -->
+    <div class="tab-content" id="stats-tab">
+        <h2>Player Statistics</h2>
+        
+        <div class="stats-filters">
+            <div>
+                <label for="positionFilter">Position Filter:</label>
+                <select id="positionFilter">
+                    <option value="all">All Positions</option>
+                    <option value="goalkeeper">Goalkeeper</option>
+                    <option value="forward">Forward</option>
+                    <option value="midfielder">Midfielder</option>
+                    <option value="defender">Defender</option>
+                    <option value="multipraktik">Multipraktik</option>
+                </select>
+            </div>
+            <div>
+                <label for="styleFilter">Style Filter:</label>
+                <select id="styleFilter">
+                    <option value="all">All Styles</option>
+                    <option value="balanced">Balanced</option>
+                    <option value="defensive">Defensive</option>
+                    <option value="attacking">Attacking</option>
+                    <option value="playmaker">Playmaker</option>
+                    <option value="versatile">Versatile</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchStatsPlayers" placeholder="Search players...">
+        </div>
+        
+        <div class="stats-dashboard">
+            <div class="stats-summary">
+                <div class="stats-card">
+                    <h3>Position Breakdown</h3>
+                    <div id="positionChart" class="chart-container"></div>
+                </div>
+                <div class="stats-card">
+                    <h3>Performance by Style</h3>
+                    <div id="styleChart" class="chart-container"></div>
+                </div>
+                <div class="stats-card">
+                    <h3>Goals & Assists</h3>
+                    <div id="contributionChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="playerStats"></div>
+    </div>
+
+    <!-- Add this new tab content section after the Stats tab -->
+    <div class="tab-content" id="compare-tab">
+        <h2>Player Comparison System</h2>
+        
+        <div class="instructions">
+            <p><strong>Player Comparison:</strong> This system helps you objectively rate players by directly comparing their performances. Simply select who played better, and the system will automatically adjust ratings using an Elo algorithm.</p>
+        </div>
+        
+        <div class="comparison-container" id="comparisonContainer">
+            <div class="empty-comparison">
+                <p>Click the button below to start comparing players.</p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="generateComparison">Compare Random Players</button>
+            <button id="compareAfterMatch">Compare Players from Last Match</button>
+        </div>
+        
+        <div class="elo-explanation">
+            <h3>How the Rating System Works</h3>
+            <p>The system uses an Elo algorithm (similar to chess ratings) to objectively rate players:</p>
+            <ul>
+                <li>When a higher-rated player wins a comparison, their rating increases slightly</li>
+                <li>When a lower-rated player wins a comparison, their rating increases significantly</li>
+                <li>The losing player's rating decreases by the same amount</li>
+                <li>Multiple comparisons over time lead to more accurate ratings</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- PLAYER DEVELOPMENT TAB -->
+    <div class="tab-content" id="player-development-tab">
+        <h2>Player Development Tracking</h2>
+        
+        <div class="search-box">
+            <input type="text" id="searchDevelopmentPlayers" placeholder="Search players...">
+        </div>
+        
+        <div class="player-selector">
+            <label for="developmentPlayer">Select Player:</label>
+            <select id="developmentPlayer">
+                <option value="">Choose a player</option>
+                <!-- Will be populated via JavaScript -->
+            </select>
+            <button id="viewDevelopment">View Progress</button>
+        </div>
+        
+        <div id="playerDevelopmentStats">
+            <div class="chart-container">
+                <canvas id="developmentChart"></canvas>
+            </div>
+            
+            <div id="developmentSummary"></div>
+        </div>
+        
+        <div class="milestone-tracker">
+            <h3>Development Milestones</h3>
+            <ul id="developmentMilestones"></ul>
+        </div>
+    </div>
+
+    <!-- ACHIEVEMENTS TAB -->
+    <div class="tab-content" id="achievements-tab">
+        <h2>Player Achievements</h2>
+        
+        <div class="search-box">
+            <input type="text" id="searchAchievementsPlayers" placeholder="Search players...">
+        </div>
+        
+        <div class="achievement-summary">
+            <h3>Team Achievement Overview</h3>
+            <div id="achievementStats"></div>
+        </div>
+        
+        <div id="playerAchievements"></div>
+    </div>
+
+    <!-- TEAM CHEMISTRY TAB -->
+    <div class="tab-content" id="chemistry-tab">
+        <h2>Team Chemistry Analysis</h2>
+        
+        <div class="search-box">
+            <input type="text" id="searchChemistryPlayers" placeholder="Search players...">
+        </div>
+        
+        <div class="chemistry-filter">
+            <label for="chemistryPlayer">Find Best Partners For:</label>
+            <select id="chemistryPlayer">
+                <option value="">Choose a player</option>
+                <!-- Will be populated via JavaScript -->
+            </select>
+            <button id="findPartners">Find Best Partners</button>
+        </div>
+        
+        <div id="chemistryResults"></div>
+        
+        <div class="chemistry-overview">
+            <h3>Top Partnerships</h3>
+            <div id="topPartnerships"></div>
+        </div>
+    </div>
+
+    <!-- FIELD VISUALIZER TAB -->
+    <div class="tab-content" id="field-tab">
+        <h2>Field Position Visualizer</h2>
+        
+        <div class="team-selector">
+            <button id="visualizeTeamA" class="team-a">Visualize Team A</button>
+            <button id="visualizeTeamB" class="team-b">Visualize Team B</button>
+            <button id="visualizeBoth">Visualize Both Teams</button>
+        </div>
+        
+        <div class="football-pitch">
+            <!-- Field markings -->
+            <div class="field-line center-line"></div>
+            <div class="center-circle"></div>
+            <div class="goal-area left-goal"></div>
+            <div class="goal-area right-goal"></div>
+            
+            <!-- Player markers will be added here -->
+            <div id="fieldPlayers"></div>
+        </div>
+        
+        <div class="field-controls">
+            <button id="saveFormation">Save Formation</button>
+            <button id="loadFormation">Load Saved Formation</button>
+            <button id="clearField">Clear Field</button>
+        </div>
+    </div>
+
+    <!-- TOURNAMENT TAB -->
+    <div class="tab-content" id="tournament-tab">
+        <h2>Tournament Mode</h2>
+        
+        <div class="form">
+            <h3>Create Tournament</h3>
+            <div>
+                <label for="tournamentName">Tournament Name:</label>
+                <input type="text" id="tournamentName" placeholder="Weekend Cup">
+            </div>
+            <div>
+                <label for="tournamentFormat">Format:</label>
+                <select id="tournamentFormat">
+                    <option value="knockout">Knockout</option>
+                    <option value="league">League (Round Robin)</option>
+                    <option value="groups">Group Stage + Knockout</option>
+                </select>
+            </div>
+            <div>
+                <label for="tournamentTeams">Number of Teams:</label>
+                <select id="tournamentTeams">
+                    <option value="2">2 Teams</option>
+                    <option value="4" selected>4 Teams</option>
+                    <option value="8">8 Teams</option>
+                </select>
+            </div>
+            <button id="createTournament">Create Tournament</button>
+        </div>
+        
+        <div id="tournamentBracket" class="tournament-bracket"></div>
+        
+        <div id="tournamentStandings"></div>
+    </div>
+
+    <!-- EXPORT/IMPORT TAB -->
+    <div class="tab-content" id="data-tab">
+        <h2>Data Management</h2>
+        
+        <div class="data-controls">
+            <h3>Export Data</h3>
+            <p>Export all your data for backup or transferring to another device.</p>
+            <button id="exportData">Export All Data</button>
+        </div>
+        
+        <div class="data-controls">
+            <h3>Import Data</h3>
+            <p>Import previously exported data. Warning: This will replace all current data.</p>
+            <input type="file" id="importFile" accept=".json">
+            <button id="importData">Import Data</button>
+        </div>
+        
+        <div class="data-controls">
+            <h3>Data Backup</h3>
+            <p>Your data is automatically saved to your device. Last backup: <span id="lastBackup">Never</span></p>
+            <button id="manualBackup">Manual Backup</button>
+        </div>
+    </div>
+
+    <!-- Add Edit Player Modal -->
+    <div id="editPlayerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Player</h2>
+            <div class="edit-form">
+                <input type="hidden" id="editPlayerId">
+                
+                <div class="edit-form-group">
+                    <label for="editPlayerName">Name:</label>
+                    <input type="text" id="editPlayerName" class="form-control">
+                </div>
+                
+                <div class="edit-form-group">
+                    <label for="editPlayerRating">Skill Rating (1-10):</label>
+                    <input type="number" id="editPlayerRating" min="1" max="10" class="form-control">
+                </div>
+                
+                <div class="edit-form-group">
+                    <label for="editPlayerPosition">Primary Position:</label>
+                    <select id="editPlayerPosition" class="form-control">
+                        <option value="field">Field Player</option>
+                        <option value="goalkeeper">Goalkeeper</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+                
+                <div class="edit-form-group">
+                    <label for="editPlayerDetailedPosition">Detailed Position:</label>
+                    <select id="editPlayerDetailedPosition" class="form-control">
+                        <option value="forward">Forward</option>
+                        <option value="midfielder">Midfielder</option>
+                        <option value="defender">Defender</option>
+                        <option value="multipraktik">Multipraktik (Versatile)</option>
+                    </select>
+                </div>
+                
+                <div class="edit-form-group">
+                    <label for="editPlayerStyle">Playing Style:</label>
+                    <select id="editPlayerStyle" class="form-control">
+                        <option value="balanced">Balanced</option>
+                        <option value="defensive">Defensive</option>
+                        <option value="attacking">Attacking</option>
+                        <option value="playmaker">Playmaker</option>
+                        <option value="versatile">Versatile</option>
+                    </select>
+                </div>
+                
+                <h3>Statistics</h3>
+                <div class="edit-stats-group">
+                    <div class="edit-form-group">
+                        <label for="editPlayerAttendance">Attendance:</label>
+                        <input type="number" id="editPlayerAttendance" min="0" class="form-control">
+                    </div>
+                    
+                    <div class="edit-form-group">
+                        <label for="editPlayerMatches">Matches:</label>
+                        <input type="number" id="editPlayerMatches" min="0" class="form-control">
+                    </div>
+                    
+                    <div class="edit-form-group">
+                        <label for="editPlayerWins">Wins:</label>
+                        <input type="number" id="editPlayerWins" min="0" class="form-control">
+                    </div>
+                    
+                    <div class="edit-form-group">
+                        <label for="editPlayerLosses">Losses:</label>
+                        <input type="number" id="editPlayerLosses" min="0" class="form-control">
+                    </div>
+                    
+                    <div class="edit-form-group">
+                        <label for="editPlayerDraws">Draws:</label>
+                        <input type="number" id="editPlayerDraws" min="0" class="form-control">
+                    </div>
+                    
+                    <div class="edit-form-group">
+                        <label for="editPlayerGoals">Goals:</label>
+                        <input type="number" id="editPlayerGoals" min="0" class="form-control">
+                    </div>
+                    
+                    <div class="edit-form-group">
+                        <label for="editPlayerAssists">Assists:</label>
+                        <input type="number" id="editPlayerAssists" min="0" class="form-control">
+                    </div>
+                </div>
+                
+                <button id="saveEditPlayer" class="btn btn-primary" onclick="savePlayerEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Score Tracking UI to the Teams Container -->
+    <div class="score-tracker" id="scoreTracker" style="display: none;">
+        <h3>Match Score Tracker</h3>
+        
+        <div class="match-timer">
+            <span id="matchTime">00:00</span>
+        </div>
+        
+        <div class="timer-controls">
+            <button id="startTimerBtn" class="btn btn-primary">Start</button>
+            <button id="pauseTimerBtn" class="btn btn-secondary" disabled>Pause</button>
+            <button id="resetTimerBtn" class="btn btn-danger">Reset</button>
+        </div>
+        
+        <div class="score-display">
+            <div class="team-score">
+                <div class="team-name" id="teamAName">Team A</div>
+                <div class="score" id="teamAScore">0</div>
+            </div>
+            
+            <div class="score-separator">:</div>
+            
+            <div class="team-score">
+                <div class="team-name" id="teamBName">Team B</div>
+                <div class="score" id="teamBScore">0</div>
+            </div>
+        </div>
+        
+        <div class="goal-buttons">
+            <button id="teamAGoalBtn" class="goal-button">Goal for Team A</button>
+            <button id="teamBGoalBtn" class="goal-button">Goal for Team B</button>
+        </div>
+    </div>
+
+    <script>
+        // Data structures
+        let allPlayers = JSON.parse(localStorage.getItem('footballPlayers')) || [];
+        let matchHistory = JSON.parse(localStorage.getItem('matchHistory')) || [];
+        let selectedPlayers = [];
+        let teamA = {
+            starters: [],
+            reserves: [],
+            captain: null,
+            goals: []
+        };
+        let teamB = {
+            starters: [],
+            reserves: [],
+            captain: null,
+            goals: []
+        };
+        let captainMode = false;
+        let currentTeamTurn = 'A';
+        let unpickedPlayers = [];
+        
+        // DOM elements - Tabs
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // DOM elements - Players
+        const playerListEl = document.getElementById('playerList');
+        const searchEl = document.getElementById('searchPlayers');
+        const sortEl = document.getElementById('sortPlayers');
+        const playerCountEl = document.getElementById('playerCount');
+        const fileInputEl = document.getElementById('fileInput');
+        
+        // DOM elements - Game Day
+        const availablePlayerListEl = document.getElementById('availablePlayerList');
+        const searchGameEl = document.getElementById('searchGamePlayers');
+        const teamAStartersEl = document.getElementById('teamAStarters');
+        const teamBStartersEl = document.getElementById('teamBStarters');
+        const teamAReservesEl = document.getElementById('teamAReserves');
+        const teamBReservesEl = document.getElementById('teamBReserves');
+        const teamAStatsEl = document.getElementById('teamAStats');
+        const teamBStatsEl = document.getElementById('teamBStats');
+        const captainPickerEl = document.getElementById('captainPicker');
+        const captainSelectionEl = document.getElementById('captainSelection');
+        const captainAEl = document.getElementById('captainA');
+        const captainBEl = document.getElementById('captainB');
+        const turnIndicatorEl = document.getElementById('turnIndicator');
+        const pickablePlayerListEl = document.getElementById('pickablePlayerList');
+        
+        // DOM elements - Match History
+        const matchHistoryEl = document.getElementById('matchHistory');
+        
+        // DOM elements - Statistics
+        const playerStatsEl = document.getElementById('playerStats');
+        const searchStatsEl = document.getElementById('searchStatsPlayers');
+        
+        // DOM elements - Compare
+        const comparisonContainerEl = document.getElementById('comparisonContainer');
+        
+        // Chart variables to store chart instances
+        let positionChart = null;
+        let styleChart = null;
+        let contributionChart = null;
+        
+        // Initialize
+        renderPlayerList();
+        renderMatchHistory();
+        updatePlayerCount();
+        
+        // Tab Navigation
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+                
+                // Refresh tab content when switching
+                if(tab.dataset.tab === 'game') {
+                    renderAvailablePlayers();
+                } else if(tab.dataset.tab === 'matches') {
+                    renderMatchHistory();
+                } else if(tab.dataset.tab === 'stats') {
+                    renderPlayerStats();
+                } else if(tab.dataset.tab === 'compare') {
+                    renderComparison();
+                } else if(tab.dataset.tab === 'player-development') {
+                    initPlayerDevelopment();
+                } else if(tab.dataset.tab === 'achievements') {
+                    renderAchievementsTab();
+                } else if(tab.dataset.tab === 'chemistry') {
+                    // Initialize chemistry tab
+                } else if(tab.dataset.tab === 'field') {
+                    // Already initialized
+                } else if(tab.dataset.tab === 'tournament') {
+                    // Initialize tournament tab
+                } else if(tab.dataset.tab === 'data') {
+                    // Initialize data tab
+                }
+                
+                // Clear charts when switching away from stats tab
+                if (tab.dataset.tab !== 'stats') {
+                    if (positionChart) positionChart.destroy();
+                    if (styleChart) styleChart.destroy();
+                    if (contributionChart) contributionChart.destroy();
+                    positionChart = null;
+                    styleChart = null;
+                    contributionChart = null;
+                }
+            });
+        });
+        
+        // Event Listeners - Players Tab
+        document.getElementById('addPlayer').addEventListener('click', addPlayer);
+        document.getElementById('saveToFile').addEventListener('click', saveToFile);
+        document.getElementById('loadFromFile').addEventListener('click', () => fileInputEl.click());
+        fileInputEl.addEventListener('change', loadFromFile);
+        searchEl.addEventListener('input', () => renderPlayerList());
+        sortEl.addEventListener('change', () => renderPlayerList());
+        
+        // Event Listeners - Game Day Tab
+        document.getElementById('selectAll').addEventListener('click', selectAllPlayers);
+        document.getElementById('clearSelection').addEventListener('click', clearSelection);
+        document.getElementById('balanceTeams').addEventListener('click', balanceTeams);
+        document.getElementById('captainMode').addEventListener('click', toggleCaptainMode);
+        document.getElementById('resetTeams').addEventListener('click', resetTeams);
+        document.getElementById('startPicking').addEventListener('click', startCaptainPicking);
+        document.getElementById('recordMatch').addEventListener('click', recordMatch);
+        searchGameEl.addEventListener('input', () => renderAvailablePlayers());
+        
+        // Event Listeners - Statistics Tab
+        searchStatsEl.addEventListener('input', () => renderPlayerStats());
+        
+        // Event Listeners - Compare
+        document.getElementById('generateComparison').addEventListener('click', generateRandomComparison);
+        document.getElementById('compareAfterMatch').addEventListener('click', compareLastMatchPlayers);
+        
+        // Event Listeners - Game Day
+        document.getElementById('sendInvites').addEventListener('click', simulateSendInvites);
+        
+        // Functions - Player Management
+        function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            const rating = parseInt(document.getElementById('playerRating').value);
+            const position = document.getElementById('playerPosition').value;
+            const detailedPosition = document.getElementById('playerDetailedPosition').value;
+            const style = document.getElementById('playerStyle').value;
+            
+            if (!name) return alert('Please enter a player name');
+            
+            const player = {
+                id: Date.now(),
+                name: name,
+                rating: rating,
+                position: position,
+                detailedPosition: detailedPosition,
+                style: style,
+                attendance: 0,
+                matches: 0,
+                wins: 0,
+                losses: 0,
+                draws: 0,
+                goals: 0,
+                assists: 0
+            };
+            
+            allPlayers.push(player);
+            savePlayersToStorage();
+            renderPlayerList();
+            updatePlayerCount();
+            
+            // Clear form
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerRating').value = 5;
+            document.getElementById('playerPosition').value = 'field';
+            document.getElementById('playerDetailedPosition').value = 'forward';
+            document.getElementById('playerStyle').value = 'balanced';
+        }
+        
+        function renderPlayerList() {
+            playerListEl.innerHTML = '';
+            
+            const searchTerm = searchEl.value.toLowerCase();
+            let filteredPlayers = allPlayers.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            );
+            
+            // Sort players
+            const sortBy = sortEl.value;
+            if (sortBy === 'name') {
+                filteredPlayers.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortBy === 'rating') {
+                filteredPlayers.sort((a, b) => b.rating - a.rating);
+            } else if (sortBy === 'attendance') {
+                filteredPlayers.sort((a, b) => b.attendance - a.attendance);
+            }
+            
+            filteredPlayers.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${attendanceClass}`;
+                playerCard.dataset.id = player.id;
+                
+                // Add edit button
+                const editBtn = document.createElement('span');
+                editBtn.className = 'edit-btn';
+                editBtn.innerHTML = '✏️';
+                editBtn.title = 'Edit player';
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openEditModal(player.id);
+                };
+                
+                const deleteBtn = document.createElement('span');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deletePlayer(player.id);
+                };
+                
+                playerCard.innerHTML = `
+                    <strong>${player.name}</strong><br>
+                    Rating: ${player.rating}/10<br>
+                    Position: ${formatPosition(player.position)}<br>
+                    ${player.detailedPosition ? `Role: ${formatDetailedPosition(player.detailedPosition)}<br>` : ''}
+                    ${player.style ? `Style: ${formatStyle(player.style)}<br>` : ''}
+                    ${player.attendance ? `Attendance: ${player.attendance} games<br>` : ''}
+                    ${player.goals ? `Goals: ${player.goals}<br>` : ''}
+                    ${player.assists ? `Assists: ${player.assists}` : ''}
+                `;
+                
+                playerCard.appendChild(editBtn);
+                playerCard.appendChild(deleteBtn);
+                
+                playerCard.addEventListener('click', () => {
+                    playerCard.classList.toggle('selected');
+                    updateSelectedPlayers();
+                });
+                
+                playerListEl.appendChild(playerCard);
+            });
+            
+            updatePlayerCount();
+        }
+        
+        function deletePlayer(id) {
+            if (confirm('Are you sure you want to delete this player?')) {
+                allPlayers = allPlayers.filter(p => p.id !== id);
+                selectedPlayers = selectedPlayers.filter(p => p.id !== id);
+                savePlayersToStorage();
+                renderPlayerList();
+                renderAvailablePlayers();
+                renderTeams();
+                updatePlayerCount();
+            }
+        }
+        
+        // Functions - Game Day
+        function renderAvailablePlayers() {
+            availablePlayerListEl.innerHTML = '';
+            
+            const searchTerm = searchGameEl.value.toLowerCase();
+            const filteredPlayers = allPlayers.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            ).sort((a, b) => b.attendance - a.attendance);
+            
+            filteredPlayers.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                const isSelected = selectedPlayers.some(p => p.id === player.id);
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${isSelected ? ' selected' : ''}${attendanceClass}`;
+                playerCard.innerHTML = `
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                    <br>Role: <span class="position-tag ${player.detailedPosition || 'forward'}">${formatDetailedPosition(player.detailedPosition || 'forward')}</span>
+                    <br>Style: <span class="style-tag ${player.style || 'balanced'}">${formatStyle(player.style || 'balanced')}</span>
+                    <br>Attendance: ${player.attendance} games
+                `;
+                
+                playerCard.addEventListener('click', () => togglePlayerSelection(player));
+                availablePlayerListEl.appendChild(playerCard);
+            });
+        }
+        
+        function togglePlayerSelection(player) {
+            const index = selectedPlayers.findIndex(p => p.id === player.id);
+            
+            if (index === -1) {
+                selectedPlayers.push(player);
+            } else {
+                selectedPlayers.splice(index, 1);
+            }
+            
+            renderAvailablePlayers();
+            updateCaptainSelects();
+        }
+        
+        function selectAllPlayers() {
+            selectedPlayers = [...allPlayers];
+            renderAvailablePlayers();
+            updateCaptainSelects();
+        }
+        
+        function clearSelection() {
+            selectedPlayers = [];
+            renderAvailablePlayers();
+            updateCaptainSelects();
+        }
+        
+        function updateCaptainSelects() {
+            // Update captain dropdowns
+            captainAEl.innerHTML = '<option value="">Select Captain</option>';
+            captainBEl.innerHTML = '<option value="">Select Captain</option>';
+            
+            selectedPlayers.forEach(player => {
+                const optionA = document.createElement('option');
+                optionA.value = player.id;
+                optionA.textContent = player.name;
+                captainAEl.appendChild(optionA);
+                
+                const optionB = document.createElement('option');
+                optionB.value = player.id;
+                optionB.textContent = player.name;
+                captainBEl.appendChild(optionB);
+            });
+        }
+        
+        function toggleCaptainMode() {
+            if (selectedPlayers.length < 6) {
+                return alert('Please select at least 6 players');
+            }
+            
+            captainMode = true;
+            captainPickerEl.style.display = 'block';
+            updateCaptainSelects();
+        }
+        
+        function startCaptainPicking() {
+            const captainAId = captainAEl.value;
+            const captainBId = captainBEl.value;
+            
+            if (!captainAId || !captainBId) {
+                return alert('Please select captains for both teams');
+            }
+            
+            if (captainAId === captainBId) {
+                return alert('Please select different captains for each team');
+            }
+            
+            // Reset teams
+            teamA = {
+                starters: [],
+                reserves: [],
+                captain: null,
+                goals: []
+            };
+            
+            teamB = {
+                starters: [],
+                reserves: [],
+                captain: null,
+                goals: []
+            };
+            
+            // Set captains
+            const captainA = selectedPlayers.find(p => p.id.toString() === captainAId);
+            const captainB = selectedPlayers.find(p => p.id.toString() === captainBId);
+            
+            teamA.starters.push(captainA);
+            teamA.captain = captainA;
+            
+            teamB.starters.push(captainB);
+            teamB.captain = captainB;
+            
+            // Start picking
+            currentTeamTurn = 'A'; // Team A starts
+            unpickedPlayers = selectedPlayers.filter(p => 
+                p.id !== captainA.id && p.id !== captainB.id
+            );
+            
+            captainSelectionEl.style.display = 'block';
+            updateTurnIndicator();
+            renderPickablePlayers();
+            renderTeams();
+        }
+        
+        function updateTurnIndicator() {
+            const currentCaptain = currentTeamTurn === 'A' ? teamA.captain.name : teamB.captain.name;
+            turnIndicatorEl.textContent = `Team ${currentTeamTurn} Captain's Turn (${currentCaptain})`;
+        }
+        
+        function renderPickablePlayers() {
+            pickablePlayerListEl.innerHTML = '';
+            
+            unpickedPlayers.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${attendanceClass}`;
+                playerCard.innerHTML = `
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                    <br>Role: <span class="position-tag ${player.detailedPosition || 'forward'}">${formatDetailedPosition(player.detailedPosition || 'forward')}</span>
+                    <br>Style: <span class="style-tag ${player.style || 'balanced'}">${formatStyle(player.style || 'balanced')}</span>
+                `;
+                
+                playerCard.addEventListener('click', () => pickPlayer(player));
+                pickablePlayerListEl.appendChild(playerCard);
+            });
+        }
+        
+        function pickPlayer(player) {
+            // Add to current team
+            const currentTeam = currentTeamTurn === 'A' ? teamA : teamB;
+            
+            if (currentTeam.starters.length < 6) {
+                currentTeam.starters.push(player);
+            } else {
+                currentTeam.reserves.push(player);
+            }
+            
+            // Remove from unpicked
+            unpickedPlayers = unpickedPlayers.filter(p => p.id !== player.id);
+            
+            // Switch turns
+            currentTeamTurn = currentTeamTurn === 'A' ? 'B' : 'A';
+            
+            // Update UI
+            updateTurnIndicator();
+            renderPickablePlayers();
+            renderTeams();
+            
+            // Check if picking is complete
+            if (unpickedPlayers.length === 0) {
+                alert('All players have been picked!');
+                captainSelectionEl.style.display = 'none';
+            }
+        }
+        
+        // Add a shuffle function for arrays
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Modify balanceTeams function to work properly and add randomization
+        function balanceTeams() {
+            // Check if we have an even number of players
+            if (selectedPlayers.length % 2 !== 0) {
+                alert('Please select an even number of players to create balanced teams.');
+                return;
+            }
+            
+            // Create copies to work with
+            const availablePlayers = [...selectedPlayers];
+            teamA = [];
+            teamB = [];
+            
+            // Add randomization - shuffle the players slightly before sorting
+            shuffleArray(availablePlayers);
+            
+            // Ensure we have at least one goalkeeper per team if possible
+            const goalkeepers = availablePlayers.filter(p => 
+                p.position === 'goalkeeper' || p.position === 'both');
+            
+            // If we have goalkeepers, assign one to each team first
+            if (goalkeepers.length >= 2) {
+                // Shuffle goalkeepers for randomness
+                shuffleArray(goalkeepers);
+                
+                // Assign first goalkeeper to team A
+                const goalkeeperA = goalkeepers[0];
+                teamA.push(goalkeeperA);
+                availablePlayers.splice(availablePlayers.findIndex(p => p.id === goalkeeperA.id), 1);
+                
+                // Assign second goalkeeper to team B
+                const goalkeeperB = goalkeepers[1];
+                teamB.push(goalkeeperB);
+                availablePlayers.splice(availablePlayers.findIndex(p => p.id === goalkeeperB.id), 1);
+            } else if (goalkeepers.length === 1) {
+                // If only one goalkeeper, place them and remember for later balancing
+                const goalkeeper = goalkeepers[0];
+                teamA.push(goalkeeper);
+                availablePlayers.splice(availablePlayers.findIndex(p => p.id === goalkeeper.id), 1);
+            }
+            
+            // Sort remaining players by rating (highest first) with slight randomization
+            availablePlayers.sort((a, b) => {
+                // Apply a small bonus for versatile players
+                const aRating = a.detailedPosition === 'multipraktik' ? 
+                                a.rating * 1.05 : a.rating;
+                const bRating = b.detailedPosition === 'multipraktik' ? 
+                                b.rating * 1.05 : b.rating;
+                
+                // Add slight randomization (±10% variance)
+                const randomFactorA = 0.9 + (Math.random() * 0.2); // 0.9 to 1.1
+                const randomFactorB = 0.9 + (Math.random() * 0.2); // 0.9 to 1.1
+                
+                return (bRating * randomFactorB) - (aRating * randomFactorA);
+            });
+            
+            // Distribute remaining players to ensure equal team sizes
+            const targetSize = selectedPlayers.length / 2;
+            
+            // Balancing algorithm - ensure equal size teams
+            while (availablePlayers.length > 0) {
+                // Determine which team needs players
+                if (teamA.length < teamB.length) {
+                    teamA.push(availablePlayers.shift());
+                } else if (teamB.length < teamA.length) {
+                    teamB.push(availablePlayers.shift());
+                } else {
+                    // Teams are equal size, assign next player based on current team strength
+                    const teamAStrength = teamA.reduce((sum, p) => sum + p.rating, 0);
+                    const teamBStrength = teamB.reduce((sum, p) => sum + p.rating, 0);
+                    
+                    // Add randomness - 10% chance to go against the optimal choice
+                    if (Math.random() < 0.1) {
+                        if (teamAStrength > teamBStrength) {
+                            teamA.push(availablePlayers.shift());
+                        } else {
+                            teamB.push(availablePlayers.shift());
+                        }
+                    } else {
+                        if (teamAStrength <= teamBStrength) {
+                            teamA.push(availablePlayers.shift());
+                        } else {
+                            teamB.push(availablePlayers.shift());
+                        }
+                    }
+                }
+            }
+            
+            // Verify teams are balanced
+            if (teamA.length !== teamB.length) {
+                console.error("Team sizes are not equal after balancing!");
+                // Try to fix by moving a player
+                while (teamA.length > teamB.length) {
+                    teamB.push(teamA.pop());
+                }
+                while (teamB.length > teamA.length) {
+                    teamA.push(teamB.pop());
+                }
+            }
+            
+            // Add final randomization - randomly swap up to 2 similar players
+            for (let i = 0; i < 2; i++) {
+                if (Math.random() < 0.5 && teamA.length > 2 && teamB.length > 2) {
+                    // Find two players with similar ratings to swap
+                    let minDiff = 3; // Maximum rating difference to consider for swapping
+                    let playerA = null;
+                    let playerB = null;
+                    
+                    for (let a = 0; a < teamA.length; a++) {
+                        for (let b = 0; b < teamB.length; b++) {
+                            const diff = Math.abs(teamA[a].rating - teamB[b].rating);
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                playerA = a;
+                                playerB = b;
+                            }
+                        }
+                    }
+                    
+                    // Swap similar players if found
+                    if (playerA !== null && playerB !== null) {
+                        const temp = teamA[playerA];
+                        teamA[playerA] = teamB[playerB];
+                        teamB[playerB] = temp;
+                    }
+                }
+            }
+            
+            // Calculate team ratings
+            calculateTeamRatings();
+            
+            // Render teams
+            renderTeams();
+            
+            // Show the teams container
+            document.getElementById('teamsContainer').style.display = 'block';
+        }
+        
+        // Fix the calculateTeamRatings function
+        function calculateTeamRatings() {
+            // Calculate average skill rating for each team
+            teamARating = teamA.length > 0 ? 
+                teamA.reduce((sum, player) => sum + player.rating, 0) / teamA.length : 0;
+            teamBRating = teamB.length > 0 ? 
+                teamB.reduce((sum, player) => sum + player.rating, 0) / teamB.length : 0;
+                
+            // Round to 1 decimal place for display
+            teamARating = Math.round(teamARating * 10) / 10;
+            teamBRating = Math.round(teamBRating * 10) / 10;
+        }
+        
+        // Fix the renderTeams function
+        function renderTeams() {
+            const teamAEl = document.getElementById('teamA');
+            const teamBEl = document.getElementById('teamB');
+            
+            // Clear previous teams
+            teamAEl.innerHTML = '';
+            teamBEl.innerHTML = '';
+            
+            // Team A header
+            const teamAHeader = document.createElement('div');
+            teamAHeader.className = 'team-header';
+            teamAHeader.innerHTML = `
+                <h3 class="team-title">Team A</h3>
+                <div class="team-rating">Rating: ${teamARating.toFixed(1)}</div>
+            `;
+            teamAEl.appendChild(teamAHeader);
+            
+            // Team B header
+            const teamBHeader = document.createElement('div');
+            teamBHeader.className = 'team-header';
+            teamBHeader.innerHTML = `
+                <h3 class="team-title">Team B</h3>
+                <div class="team-rating">Rating: ${teamBRating.toFixed(1)}</div>
+            `;
+            teamBEl.appendChild(teamBHeader);
+            
+            // Create sections for goalkeepers and field players
+            const teamAGoalkeepersSection = document.createElement('div');
+            teamAGoalkeepersSection.className = 'player-section';
+            teamAGoalkeepersSection.innerHTML = '<div class="section-title">Goalkeepers</div>';
+            
+            const teamAFieldPlayersSection = document.createElement('div');
+            teamAFieldPlayersSection.className = 'player-section';
+            teamAFieldPlayersSection.innerHTML = '<div class="section-title">Field Players</div>';
+            
+            const teamBGoalkeepersSection = document.createElement('div');
+            teamBGoalkeepersSection.className = 'player-section';
+            teamBGoalkeepersSection.innerHTML = '<div class="section-title">Goalkeepers</div>';
+            
+            const teamBFieldPlayersSection = document.createElement('div');
+            teamBFieldPlayersSection.className = 'player-section';
+            teamBFieldPlayersSection.innerHTML = '<div class="section-title">Field Players</div>';
+            
+            // Add players to sections
+            let teamAHasGoalkeeper = false;
+            let teamBHasGoalkeeper = false;
+            
+            teamA.forEach(player => {
+                const playerItem = document.createElement('div');
+                playerItem.className = 'player-item';
+                playerItem.innerHTML = `
+                    <span class="player-name">${player.name}</span>
+                    <span class="player-rating">(${player.rating})</span>
+                `;
+                
+                if (player.position === 'goalkeeper' || player.position === 'both') {
+                    teamAGoalkeepersSection.appendChild(playerItem);
+                    teamAHasGoalkeeper = true;
+                } else {
+                    teamAFieldPlayersSection.appendChild(playerItem);
+                }
+            });
+            
+            teamB.forEach(player => {
+                const playerItem = document.createElement('div');
+                playerItem.className = 'player-item';
+                playerItem.innerHTML = `
+                    <span class="player-name">${player.name}</span>
+                    <span class="player-rating">(${player.rating})</span>
+                `;
+                
+                if (player.position === 'goalkeeper' || player.position === 'both') {
+                    teamBGoalkeepersSection.appendChild(playerItem);
+                    teamBHasGoalkeeper = true;
+                } else {
+                    teamBFieldPlayersSection.appendChild(playerItem);
+                }
+            });
+            
+            // Add sections to teams
+            if (teamAHasGoalkeeper) {
+                teamAEl.appendChild(teamAGoalkeepersSection);
+            }
+            teamAEl.appendChild(teamAFieldPlayersSection);
+            
+            if (teamBHasGoalkeeper) {
+                teamBEl.appendChild(teamBGoalkeepersSection);
+            }
+            teamBEl.appendChild(teamBFieldPlayersSection);
+            
+            // Add team comparison
+            const comparisonEl = document.createElement('div');
+            comparisonEl.className = 'team-comparison';
+            
+            const ratingDiff = Math.abs(teamARating - teamBRating);
+            const balanceMessage = ratingDiff <= 0.3 ? 'Teams are very balanced!' : 
+                                  ratingDiff <= 0.7 ? 'Teams are reasonably balanced.' : 
+                                  'Teams may be unbalanced.';
+            
+            comparisonEl.innerHTML = `
+                <div class="comparison-result">
+                    <span class="balance-status">${balanceMessage}</span>
+                    <span class="rating-diff">Rating difference: ${ratingDiff.toFixed(1)}</span>
+                </div>
+            `;
+            
+            document.getElementById('teamComparison').innerHTML = '';
+            document.getElementById('teamComparison').appendChild(comparisonEl);
+        }
+        
+        function renderTeamPlayers(players, container) {
+            players.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                
+                let attendanceClass = '';
+                if (player.attendance >= 10) {
+                    attendanceClass = ' high-attendance';
+                } else if (player.attendance <= 3 && player.attendance > 0) {
+                    attendanceClass = ' low-attendance';
+                }
+                
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${attendanceClass}`;
+                playerCard.innerHTML = `
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                    <br>Role: <span class="position-tag ${player.detailedPosition || 'forward'}">${formatDetailedPosition(player.detailedPosition || 'forward')}</span>
+                    <br>Style: <span class="style-tag ${player.style || 'balanced'}">${formatStyle(player.style || 'balanced')}</span>
+                `;
+                
+                container.appendChild(playerCard);
+            });
+        }
+        
+        function updateTeamStats() {
+            const teamARating = getTotalRating(teamA.starters) / (teamA.starters.length || 1);
+            const teamBRating = getTotalRating(teamB.starters) / (teamB.starters.length || 1);
+            
+            teamAStatsEl.innerHTML = `
+                <div>Average Rating: ${teamARating.toFixed(1)}</div>
+                <div>Players: ${teamA.starters.length + teamA.reserves.length}</div>
+            `;
+            
+            teamBStatsEl.innerHTML = `
+                <div>Average Rating: ${teamBRating.toFixed(1)}</div>
+                <div>Players: ${teamB.starters.length + teamB.reserves.length}</div>
+            `;
+        }
+        
+        function getTotalRating(players) {
+            return players.reduce((sum, player) => sum + player.rating, 0);
+        }
+        
+        function resetTeams() {
+            teamA = {
+                starters: [],
+                reserves: [],
+                captain: null,
+                goals: []
+            };
+            
+            teamB = {
+                starters: [],
+                reserves: [],
+                captain: null,
+                goals: []
+            };
+            
+            captainMode = false;
+            captainPickerEl.style.display = 'none';
+            captainSelectionEl.style.display = 'none';
+            
+            document.getElementById('teamAScore').value = 0;
+            document.getElementById('teamBScore').value = 0;
+            
+            renderTeams();
+            renderGoals();
+        }
+        
+        function addGoal(team) {
+            const teamObj = team === 'A' ? teamA : teamB;
+            const scorerSelect = document.getElementById(`team${team}Scorer`);
+            const assistSelect = document.getElementById(`team${team}Assist`);
+            
+            const scorerId = scorerSelect.value;
+            const assistId = assistSelect.value;
+            
+            if (!scorerId) {
+                return alert('Please select a goal scorer');
+            }
+            
+            const scorer = allPlayers.find(p => p.id.toString() === scorerId);
+            const assist = assistId ? allPlayers.find(p => p.id.toString() === assistId) : null;
+            
+            const goal = {
+                scorer: scorer.id,
+                scorerName: scorer.name,
+                assist: assist ? assist.id : null,
+                assistName: assist ? assist.name : null,
+                time: Date.now()
+            };
+            
+            teamObj.goals.push(goal);
+            
+            // Update score input
+            const scoreInput = document.getElementById(`team${team}Score`);
+            scoreInput.value = parseInt(scoreInput.value || 0) + 1;
+            
+            // Update goals display
+            renderGoals();
+            
+            // Reset selectors
+            scorerSelect.value = '';
+            assistSelect.value = '';
+        }
+        
+        function renderGoals() {
+            const teamAGoalsEl = document.getElementById('teamAGoals');
+            const teamBGoalsEl = document.getElementById('teamBGoals');
+            
+            teamAGoalsEl.innerHTML = '';
+            teamBGoalsEl.innerHTML = '';
+            
+            teamA.goals.forEach(goal => {
+                const goalDiv = document.createElement('div');
+                goalDiv.className = 'goal-item';
+                goalDiv.innerHTML = 
+                    `<strong>${goal.scorerName}</strong>${goal.assistName ? ` (assist: ${goal.assistName})` : ''}
+                     <button class="incremental-btn" onclick="removeGoal('A', ${goal.time})">×</button>`;
+                teamAGoalsEl.appendChild(goalDiv);
+            });
+            
+            teamB.goals.forEach(goal => {
+                const goalDiv = document.createElement('div');
+                goalDiv.className = 'goal-item';
+                goalDiv.innerHTML = 
+                    `<strong>${goal.scorerName}</strong>${goal.assistName ? ` (assist: ${goal.assistName})` : ''}
+                     <button class="incremental-btn" onclick="removeGoal('B', ${goal.time})">×</button>`;
+                teamBGoalsEl.appendChild(goalDiv);
+            });
+        }
+        
+        function removeGoal(team, timestamp) {
+            const teamObj = team === 'A' ? teamA : teamB;
+            
+            // Find and remove the goal
+            const index = teamObj.goals.findIndex(g => g.time === timestamp);
+            if (index !== -1) {
+                teamObj.goals.splice(index, 1);
+                
+                // Update score input
+                const scoreInput = document.getElementById(`team${team}Score`);
+                scoreInput.value = Math.max(0, parseInt(scoreInput.value || 0) - 1);
+                
+                // Update goals display
+                renderGoals();
+            }
+        }
+        
+        function updateGoalSelectors() {
+            const teamAScorer = document.getElementById('teamAScorer');
+            const teamAAssist = document.getElementById('teamAAssist');
+            const teamBScorer = document.getElementById('teamBScorer');
+            const teamBAssist = document.getElementById('teamBAssist');
+            
+            // Clear existing options except the default
+            teamAScorer.innerHTML = '<option value="">Goal scorer...</option>';
+            teamAAssist.innerHTML = '<option value="">Assist (optional)...</option>';
+            teamBScorer.innerHTML = '<option value="">Goal scorer...</option>';
+            teamBAssist.innerHTML = '<option value="">Assist (optional)...</option>';
+            
+            // Add all Team A players
+            [...teamA.starters, ...teamA.reserves].forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = player.name;
+                teamAScorer.appendChild(option);
+                
+                const assistOption = option.cloneNode(true);
+                teamAAssist.appendChild(assistOption);
+            });
+            
+            // Add all Team B players
+            [...teamB.starters, ...teamB.reserves].forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = player.name;
+                teamBScorer.appendChild(option);
+                
+                const assistOption = option.cloneNode(true);
+                teamBAssist.appendChild(assistOption);
+            });
+        }
+        
+        function recordMatch() {
+            if (teamA.starters.length === 0 || teamB.starters.length === 0) {
+                return alert('Please create teams before recording a match');
+            }
+            
+            const teamAScore = parseInt(document.getElementById('teamAScore').value) || 0;
+            const teamBScore = parseInt(document.getElementById('teamBScore').value) || 0;
+            
+            // Validate goal count matches score
+            if (teamA.goals.length !== teamAScore || teamB.goals.length !== teamBScore) {
+                if (!confirm('The number of recorded goals doesn\'t match the score. Continue anyway?')) {
+                    return;
+                }
+            }
+            
+            // Create match object
+            const match = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString(),
+                teamA: {
+                    starters: teamA.starters.map(p => p.id),
+                    reserves: teamA.reserves.map(p => p.id),
+                    score: teamAScore,
+                    goals: teamA.goals
+                },
+                teamB: {
+                    starters: teamB.starters.map(p => p.id),
+                    reserves: teamB.reserves.map(p => p.id),
+                    score: teamBScore,
+                    goals: teamB.goals
+                }
+            };
+            
+            // Update player statistics
+            const allTeamPlayers = [...teamA.starters, ...teamA.reserves, ...teamB.starters, ...teamB.reserves];
+            
+            allTeamPlayers.forEach(player => {
+                const playerIndex = allTeamPlayers.findIndex(p => p.id === player.id);
+                
+                // Only update once per player
+                if (playerIndex === allTeamPlayers.indexOf(player)) {
+                    // Update attendance
+                    player.attendance = (player.attendance || 0) + 1;
+                    player.matches = (player.matches || 0) + 1;
+                    
+                    // Update win/loss/draw
+                    const isTeamA = teamA.starters.includes(player) || teamA.reserves.includes(player);
+                    
+                    if (teamAScore > teamBScore) {
+                        if (isTeamA) player.wins = (player.wins || 0) + 1;
+                        else player.losses = (player.losses || 0) + 1;
+                    } else if (teamBScore > teamAScore) {
+                        if (isTeamA) player.losses = (player.losses || 0) + 1;
+                        else player.wins = (player.wins || 0) + 1;
+                    } else {
+                        player.draws = (player.draws || 0) + 1;
+                    }
+                }
+            });
+            
+            // Update goals and assists for each player
+            const allGoals = [...teamA.goals, ...teamB.goals];
+            allGoals.forEach(goal => {
+                // Update scorer
+                const scorer = allPlayers.find(p => p.id === goal.scorer);
+                if (scorer) {
+                    scorer.goals = (scorer.goals || 0) + 1;
+                }
+                
+                // Update assist provider if any
+                if (goal.assist) {
+                    const assistant = allPlayers.find(p => p.id === goal.assist);
+                    if (assistant) {
+                        assistant.assists = (assistant.assists || 0) + 1;
+                    }
+                }
+            });
+            
+            // Save match to history
+            matchHistory.push(match);
+            saveMatchesToStorage();
+            savePlayersToStorage();
+            
+            alert('Match recorded successfully!');
+            renderMatchHistory();
+            renderPlayerList();
+            resetTeams();
+        }
+        
+        function renderMatchHistory() {
+            matchHistoryEl.innerHTML = '';
+            
+            if (matchHistory.length === 0) {
+                matchHistoryEl.innerHTML = '<p>No matches recorded yet.</p>';
+                return;
+            }
+            
+            // Sort by date, newest first
+            const sortedMatches = [...matchHistory].reverse();
+            
+            sortedMatches.forEach(match => {
+                const matchEl = document.createElement('div');
+                matchEl.className = 'match-item';
+                
+                // Get player names for display
+                const teamAStarterNames = getPlayerNamesById(match.teamA.starters);
+                const teamBStarterNames = getPlayerNamesById(match.teamB.starters);
+                
+                // Create goals summary
+                let teamAGoalsSummary = '';
+                let teamBGoalsSummary = '';
+                
+                if (match.teamA.goals && match.teamA.goals.length > 0) {
+                    teamAGoalsSummary = '<div><strong>Team A Goals:</strong> ' + 
+                        match.teamA.goals.map(g => 
+                            `${g.scorerName}${g.assistName ? ` (assist: ${g.assistName})` : ''}`
+                        ).join(', ') + '</div>';
+                }
+                
+                if (match.teamB.goals && match.teamB.goals.length > 0) {
+                    teamBGoalsSummary = '<div><strong>Team B Goals:</strong> ' + 
+                        match.teamB.goals.map(g => 
+                            `${g.scorerName}${g.assistName ? ` (assist: ${g.assistName})` : ''}`
+                        ).join(', ') + '</div>';
+                }
+                
+                matchEl.innerHTML = `
+                    <div><strong>Date:</strong> ${match.date}</div>
+                    <div class="score">Team A ${match.teamA.score} - ${match.teamB.score} Team B</div>
+                    <div><strong>Team A:</strong> ${teamAStarterNames.join(', ')}</div>
+                    <div><strong>Team B:</strong> ${teamBStarterNames.join(', ')}</div>
+                    ${teamAGoalsSummary}
+                    ${teamBGoalsSummary}
+                `;
+                
+                matchHistoryEl.appendChild(matchEl);
+            });
+        }
+        
+        function renderPlayerStats() {
+            playerStatsEl.innerHTML = '';
+            
+            const searchTerm = searchStatsEl.value.toLowerCase();
+            const positionFilter = document.getElementById('positionFilter').value;
+            const styleFilter = document.getElementById('styleFilter').value;
+            
+            let filteredPlayers = allPlayers.filter(p => 
+                p.name.toLowerCase().includes(searchTerm) &&
+                (positionFilter === 'all' || p.detailedPosition === positionFilter) &&
+                (styleFilter === 'all' || p.style === styleFilter)
+            );
+            
+            // Sort by matches played
+            filteredPlayers.sort((a, b) => b.matches - a.matches);
+            
+            // Generate statistics summary
+            renderStatsSummary(filteredPlayers);
+            
+            filteredPlayers.forEach(player => {
+                if (player.matches > 0) {
+                    const winRate = player.matches > 0 
+                        ? ((player.wins / player.matches) * 100).toFixed(1) 
+                        : '0.0';
+                    
+                    const playerStatsCard = document.createElement('div');
+                    playerStatsCard.className = 'match-item';
+                    playerStatsCard.innerHTML = `
+                        <h3>${player.name}</h3>
+                        <div><strong>Skill Rating:</strong> ${player.rating}/10</div>
+                        <div><strong>Position:</strong> ${formatPosition(player.position)}</div>
+                        <div><strong>Role:</strong> <span class="position-tag ${player.detailedPosition || 'forward'}">${formatDetailedPosition(player.detailedPosition || 'forward')}</span></div>
+                        <div><strong>Style:</strong> <span class="style-tag ${player.style || 'balanced'}">${formatStyle(player.style || 'balanced')}</span></div>
+                        <div><strong>Matches Played:</strong> ${player.matches}</div>
+                        <div><strong>Record:</strong> ${player.wins}W - ${player.losses}L - ${player.draws}D</div>
+                        <div><strong>Win Rate:</strong> ${winRate}%</div>
+                        <div><strong>Goals:</strong> ${player.goals || 0}</div>
+                        <div><strong>Assists:</strong> ${player.assists || 0}</div>
+                    `;
+                    
+                    playerStatsEl.appendChild(playerStatsCard);
+                }
+            });
+            
+            if (playerStatsEl.children.length === 0) {
+                playerStatsEl.innerHTML = '<p>No player statistics available.</p>';
+            }
+        }
+        
+        function renderStatsSummary(players) {
+            // Clear previous charts if they exist
+            if (positionChart) positionChart.destroy();
+            if (styleChart) styleChart.destroy();
+            if (contributionChart) contributionChart.destroy();
+            
+            // Only generate charts if we have players with matches
+            const playersWithMatches = players.filter(p => p.matches > 0);
+            if (playersWithMatches.length === 0) {
+                document.getElementById('positionChart').innerHTML = '<div style="text-align: center; padding: 20px;">No data available.</div>';
+                document.getElementById('styleChart').innerHTML = '<div style="text-align: center; padding: 20px;">No data available.</div>';
+                document.getElementById('contributionChart').innerHTML = '<div style="text-align: center; padding: 20px;">No data available.</div>';
+                return;
+            }
+            
+            // Position breakdown chart (pie chart)
+            createPositionChart(players);
+            
+            // Performance by style chart (bar chart)
+            createStyleChart(playersWithMatches);
+            
+            // Goals & assists chart (horizontal bar chart)
+            createContributionChart(playersWithMatches);
+        }
+        
+        function createPositionChart(players) {
+            // Count players by position
+            const positions = {
+                'forward': 0,
+                'midfielder': 0,
+                'defender': 0,
+                'multipraktik': 0,
+                'goalkeeper': 0
+            };
+            
+            players.forEach(player => {
+                if (player.position === 'goalkeeper') {
+                    positions['goalkeeper']++;
+                } else if (player.detailedPosition) {
+                    positions[player.detailedPosition]++;
+                }
+            });
+            
+            // Prepare chart data
+            const labels = ['Forward', 'Midfielder', 'Defender', 'Multipraktik', 'Goalkeeper'];
+            const data = [
+                positions['forward'],
+                positions['midfielder'], 
+                positions['defender'],
+                positions['multipraktik'],
+                positions['goalkeeper']
+            ];
+            const backgroundColor = [
+                '#ffcdd2', // Forward - light red
+                '#c8e6c9', // Midfielder - light green
+                '#bbdefb', // Defender - light blue
+                '#e1bee7', // Multipraktik - light purple
+                '#ffecb3'  // Goalkeeper - light yellow
+            ];
+            
+            // Create chart
+            const ctx = document.getElementById('positionChart').getContext('2d');
+            positionChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 15
+                            }
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createStyleChart(players) {
+            // Calculate win rate by style
+            const styles = {
+                'balanced': { wins: 0, matches: 0 },
+                'defensive': { wins: 0, matches: 0 },
+                'attacking': { wins: 0, matches: 0 },
+                'playmaker': { wins: 0, matches: 0 },
+                'versatile': { wins: 0, matches: 0 }
+            };
+            
+            players.forEach(player => {
+                const style = player.style || 'balanced';
+                styles[style].wins += player.wins || 0;
+                styles[style].matches += player.matches || 0;
+            });
+            
+            // Calculate win percentages
+            const winRates = Object.keys(styles).map(style => {
+                return {
+                    style: style,
+                    winRate: styles[style].matches > 0 ? (styles[style].wins / styles[style].matches) * 100 : 0
+                };
+            });
+            
+            // Prepare chart data
+            const labels = winRates.map(item => formatStyle(item.style));
+            const data = winRates.map(item => parseFloat(item.winRate.toFixed(1)));
+            
+            // Create chart
+            const ctx = document.getElementById('styleChart').getContext('2d');
+            styleChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Win Rate (%)',
+                        data: data,
+                        backgroundColor: [
+                            '#b2dfdb', // Balanced - teal-ish
+                            '#d1c4e9', // Defensive - purple-ish
+                            '#ffccbc', // Attacking - orange-ish
+                            '#b3e5fc', // Playmaker - blue-ish
+                            '#f0f4c3'  // Versatile - yellow-green-ish
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Win Rate (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createContributionChart(players) {
+            // Sort players by goals + assists
+            const topContributors = [...players]
+                .filter(p => (p.goals || 0) + (p.assists || 0) > 0)
+                .sort((a, b) => {
+                    const aContrib = (a.goals || 0) + (a.assists || 0);
+                    const bContrib = (b.goals || 0) + (b.assists || 0);
+                    return bContrib - aContrib;
+                })
+                .slice(0, 10); // Top 10 contributors
+            
+            if (topContributors.length === 0) {
+                document.getElementById('contributionChart').innerHTML = 
+                    '<div style="text-align: center; padding: 20px;">No goals or assists recorded yet.</div>';
+                return;
+            }
+            
+            // Prepare chart data
+            const labels = topContributors.map(p => p.name);
+            const goalsData = topContributors.map(p => p.goals || 0);
+            const assistsData = topContributors.map(p => p.assists || 0);
+            
+            // Create chart
+            const ctx = document.getElementById('contributionChart').getContext('2d');
+            contributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Goals',
+                            data: goalsData,
+                            backgroundColor: '#ef9a9a',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Assists',
+                            data: assistsData,
+                            backgroundColor: '#90caf9',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: false,
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            stacked: false,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function getPlayerNamesById(idArray) {
+            return idArray.map(id => {
+                const player = allPlayers.find(p => p.id === id);
+                return player ? player.name : 'Unknown Player';
+            });
+        }
+        
+        function formatPosition(position) {
+            if (position === 'field') return 'Field Player';
+            if (position === 'goalkeeper') return 'Goalkeeper';
+            if (position === 'both') return 'Field/GK';
+            return position;
+        }
+        
+        function formatDetailedPosition(position) {
+            if (position === 'forward') return 'Forward';
+            if (position === 'midfielder') return 'Midfielder';
+            if (position === 'defender') return 'Defender';
+            if (position === 'multipraktik') return 'Multipraktik';
+            return position;
+        }
+        
+        function formatStyle(style) {
+            if (style === 'balanced') return 'Balanced';
+            if (style === 'defensive') return 'Defensive';
+            if (style === 'attacking') return 'Attacking';
+            if (style === 'playmaker') return 'Playmaker';
+            if (style === 'versatile') return 'Versatile';
+            return style;
+        }
+        
+        function updatePlayerCount() {
+            playerCountEl.textContent = allPlayers.length;
+        }
+        
+        function savePlayersToStorage() {
+            localStorage.setItem('footballPlayers', JSON.stringify(allPlayers));
+        }
+        
+        function saveMatchesToStorage() {
+            localStorage.setItem('matchHistory', JSON.stringify(matchHistory));
+        }
+        
+        function saveToFile() {
+            const data = {
+                players: allPlayers,
+                matches: matchHistory
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'football_team_data.json';
+            a.click();
+        }
+        
+        function loadFromFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (confirm('This will replace your current player data. Continue?')) {
+                        if (data.players) {
+                            allPlayers = data.players;
+                        }
+                        
+                        if (data.matches) {
+                            matchHistory = data.matches;
+                        }
+                        
+                        savePlayersToStorage();
+                        saveMatchesToStorage();
+                        renderPlayerList();
+                        updatePlayerCount();
+                        renderMatchHistory();
+                        alert('Data imported successfully!');
+                    }
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function generateRandomComparison() {
+            // Need at least 2 players to compare
+            if (allPlayers.length < 2) {
+                return alert('You need at least 2 players to compare.');
+            }
+            
+            // Select two random players
+            const playerIndices = getRandomPlayerIndices(2);
+            const player1 = allPlayers[playerIndices[0]];
+            const player2 = allPlayers[playerIndices[1]];
+            
+            renderComparison(player1, player2);
+        }
+        
+        function compareLastMatchPlayers() {
+            // Check if we have any matches
+            if (matchHistory.length === 0) {
+                return alert('No match history available. Play a match first.');
+            }
+            
+            // Get the last match
+            const lastMatch = matchHistory[matchHistory.length - 1];
+            
+            // Get all player IDs from the match
+            const playerIds = [
+                ...lastMatch.teamA.starters,
+                ...lastMatch.teamA.reserves,
+                ...lastMatch.teamB.starters,
+                ...lastMatch.teamB.reserves
+            ];
+            
+            // Remove duplicates
+            const uniqueIds = [...new Set(playerIds)];
+            
+            // Need at least 2 players to compare
+            if (uniqueIds.length < 2) {
+                return alert('Not enough players in the last match to compare.');
+            }
+            
+            // Select two random players from the match
+            const randomIndices = getRandomIndices(2, uniqueIds.length);
+            const player1 = allPlayers.find(p => p.id === uniqueIds[randomIndices[0]]);
+            const player2 = allPlayers.find(p => p.id === uniqueIds[randomIndices[1]]);
+            
+            if (!player1 || !player2) {
+                return alert('Error finding players from the last match.');
+            }
+            
+            renderComparison(player1, player2);
+        }
+        
+        function renderComparison(player1, player2) {
+            // Create comparison card
+            comparisonContainerEl.innerHTML = `
+                <div class="comparison-card">
+                    <div class="player-compare left" id="player1">
+                        <div class="player-name">${player1.name}</div>
+                        <div class="player-stats">
+                            <div>Rating: ${player1.rating}/10</div>
+                            <div>Position: ${formatPosition(player1.position)}</div>
+                            <div>Matches: ${player1.matches || 0}</div>
+                            <div>Win Rate: ${getWinRate(player1)}%</div>
+                            <div>Goals: ${player1.goals || 0}</div>
+                            <div>Assists: ${player1.assists || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-buttons">
+                        <div>Who performed better?</div>
+                        <button onclick="votePlayer(${player1.id}, ${player2.id})">← ${player1.name}</button>
+                        <button onclick="voteDraw(${player1.id}, ${player2.id})">Draw</button>
+                        <button onclick="votePlayer(${player2.id}, ${player1.id})">→ ${player2.name}</button>
+                    </div>
+                    
+                    <div class="player-compare right" id="player2">
+                        <div class="player-name">${player2.name}</div>
+                        <div class="player-stats">
+                            <div>Rating: ${player2.rating}/10</div>
+                            <div>Position: ${formatPosition(player2.position)}</div>
+                            <div>Matches: ${player2.matches || 0}</div>
+                            <div>Win Rate: ${getWinRate(player2)}%</div>
+                            <div>Goals: ${player2.goals || 0}</div>
+                            <div>Assists: ${player2.assists || 0}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function votePlayer(winnerId, loserId) {
+            const winner = allPlayers.find(p => p.id === winnerId);
+            const loser = allPlayers.find(p => p.id === loserId);
+            
+            if (!winner || !loser) {
+                return alert('Error finding players.');
+            }
+            
+            // Calculate Elo rating change with reduced volatility
+            const kFactor = 8; // Reduced from 32 to 8 (less volatile)
+            const expectedScore = 1 / (1 + Math.pow(10, (loser.rating - winner.rating) / 400));
+            const ratingChange = Math.round(kFactor * (1 - expectedScore)) / 20; // Divided by 20 instead of 10 for more gradual changes
+            
+            // Update ratings (capped between 1-10)
+            winner.rating = Math.min(10, Math.max(1, winner.rating + ratingChange));
+            loser.rating = Math.min(10, Math.max(1, loser.rating - ratingChange));
+            
+            // Round to 1 decimal place for cleaner display
+            winner.rating = Math.round(winner.rating * 10) / 10;
+            loser.rating = Math.round(loser.rating * 10) / 10;
+            
+            // Save to storage
+            savePlayersToStorage();
+            
+            // Show feedback
+            alert(`${winner.name}'s rating increased by ${ratingChange.toFixed(1)} to ${winner.rating.toFixed(1)}\n${loser.name}'s rating decreased by ${ratingChange.toFixed(1)} to ${loser.rating.toFixed(1)}`);
+            
+            // Generate a new comparison
+            generateRandomComparison();
+        }
+        
+        function voteDraw(player1Id, player2Id) {
+            // In a draw, ratings stay roughly the same with minimal adjustment
+            const player1 = allPlayers.find(p => p.id === player1Id);
+            const player2 = allPlayers.find(p => p.id === player2Id);
+            
+            if (!player1 || !player2) {
+                return alert('Error finding players.');
+            }
+            
+            // For draws, we make slightly larger adjustments to converge ratings
+            if (player1.rating > player2.rating) {
+                player1.rating = Math.max(1, player1.rating - 0.2); // Increased from 0.1 to 0.2
+                player2.rating = Math.min(10, player2.rating + 0.2); // Increased from 0.1 to 0.2
+            } else if (player2.rating > player1.rating) {
+                player2.rating = Math.max(1, player2.rating - 0.2); // Increased from 0.1 to 0.2
+                player1.rating = Math.min(10, player1.rating + 0.2); // Increased from 0.1 to 0.2
+            }
+            
+            // Round to 1 decimal place for cleaner display
+            player1.rating = Math.round(player1.rating * 10) / 10;
+            player2.rating = Math.round(player2.rating * 10) / 10;
+            
+            // Save to storage
+            savePlayersToStorage();
+            
+            // Show feedback
+            alert(`Draw recorded. Ratings adjusted slightly.`);
+            
+            // Generate a new comparison
+            generateRandomComparison();
+        }
+        
+        // Helper functions for comparison system
+        function getRandomPlayerIndices(count) {
+            return getRandomIndices(count, allPlayers.length);
+        }
+        
+        function getRandomIndices(count, max) {
+            const indices = [];
+            while (indices.length < count) {
+                const randomIndex = Math.floor(Math.random() * max);
+                if (!indices.includes(randomIndex)) {
+                    indices.push(randomIndex);
+                }
+            }
+            return indices;
+        }
+        
+        function getWinRate(player) {
+            if (!player.matches || player.matches === 0) return "0.0";
+            return ((player.wins || 0) / player.matches * 100).toFixed(1);
+        }
+        
+        function simulateSendInvites() {
+            const playersNeeded = parseInt(document.getElementById('playersNeeded').value) || 14;
+            const priorityType = document.getElementById('invitePriority').value;
+            const message = document.getElementById('invitationMessage').value;
+            
+            // Sort players based on priority
+            let sortedPlayers = [...allPlayers];
+            
+            if (priorityType === 'attendance') {
+                sortedPlayers.sort((a, b) => (b.attendance || 0) - (a.attendance || 0));
+            } else if (priorityType === 'rating') {
+                sortedPlayers.sort((a, b) => b.rating - a.rating);
+            } else if (priorityType === 'hybrid') {
+                sortedPlayers.sort((a, b) => {
+                    const aScore = (a.attendance || 0) * 0.6 + a.rating * 0.4;
+                    const bScore = (b.attendance || 0) * 0.6 + b.rating * 0.4;
+                    return bScore - aScore;
+                });
+            }
+            
+            // Get top players
+            const invitees = sortedPlayers.slice(0, playersNeeded);
+            
+            // Show results
+            const resultsEl = document.getElementById('invitationResults');
+            resultsEl.style.display = 'block';
+            
+            const inviteeListEl = document.getElementById('inviteeList');
+            inviteeListEl.innerHTML = '';
+            
+            invitees.forEach((player, index) => {
+                const inviteeEl = document.createElement('div');
+                inviteeEl.className = 'invitee';
+                inviteeEl.innerHTML = `
+                    ${index + 1}. <strong>${player.name}</strong> - 
+                    Rating: ${player.rating}/10, 
+                    Attendance: ${player.attendance || 0} games
+                    <span style="color: green">[Message sent]</span>
+                `;
+                inviteeListEl.appendChild(inviteeEl);
+            });
+            
+            alert(`Simulated sending SMS to ${invitees.length} players based on ${priorityType} priority.`);
+        }
+
+        // Add an explanation of the new rating system in the comparison tab
+        function renderComparisonTab() {
+            // ... existing code to render comparison tab ...
+            
+            // Add explanation about the Elo rating system
+            const eloExplanation = document.createElement('div');
+            eloExplanation.className = 'elo-explanation';
+            eloExplanation.innerHTML = `
+                <h3>About the Player Rating System</h3>
+                <p>Our rating system uses a modified Elo algorithm that:</p>
+                <ul>
+                    <li>Makes gradual adjustments to player ratings (1-10 scale)</li>
+                    <li>Limits how quickly ratings can change after wins/losses</li>
+                    <li>Ensures no player can drop below a rating of 1</li>
+                    <li>Rewards consistent performance over time rather than single good/bad games</li>
+                </ul>
+                <p>Compare players and vote on who performed better to help refine their ratings!</p>
+            `;
+            
+            comparisonContainerEl.appendChild(eloExplanation);
+        }
+
+        // Initialize Achievement System
+        const achievements = [
+            { id: 'scorer', name: 'Goal Machine', tier: 'gold', description: 'Score 10+ goals', requirement: player => (player.goals || 0) >= 10 },
+            { id: 'scorer-silver', name: 'Goal Getter', tier: 'silver', description: 'Score 5+ goals', requirement: player => (player.goals || 0) >= 5 },
+            { id: 'scorer-bronze', name: 'First Goal', tier: 'bronze', description: 'Score your first goal', requirement: player => (player.goals || 0) >= 1 },
+            
+            { id: 'playmaker', name: 'Master Playmaker', tier: 'gold', description: '10+ assists', requirement: player => (player.assists || 0) >= 10 },
+            { id: 'playmaker-silver', name: 'Playmaker', tier: 'silver', description: '5+ assists', requirement: player => (player.assists || 0) >= 5 },
+            { id: 'playmaker-bronze', name: 'First Assist', tier: 'bronze', description: 'Get your first assist', requirement: player => (player.assists || 0) >= 1 },
+            
+            { id: 'faithful', name: 'Team Legend', tier: 'gold', description: 'Attend 15+ games', requirement: player => (player.attendance || 0) >= 15 },
+            { id: 'faithful-silver', name: 'Team Regular', tier: 'silver', description: 'Attend 10+ games', requirement: player => (player.attendance || 0) >= 10 },
+            { id: 'faithful-bronze', name: 'Team Member', tier: 'bronze', description: 'Attend 5+ games', requirement: player => (player.attendance || 0) >= 5 },
+            
+            { id: 'versatile', name: 'Ultimate Multipraktik', tier: 'gold', description: 'Play as Multipraktik in 10+ games', 
+              requirement: player => player.detailedPosition === 'multipraktik' && player.matches >= 10 },
+            { id: 'versatile-silver', name: 'Versatile Player', tier: 'silver', description: 'Play as Multipraktik in 5+ games', 
+              requirement: player => player.detailedPosition === 'multipraktik' && player.matches >= 5 },
+              
+            { id: 'winner', name: 'Champion', tier: 'gold', description: 'Win 15+ games', requirement: player => (player.wins || 0) >= 15 },
+            { id: 'winner-silver', name: 'Winner', tier: 'silver', description: 'Win 10+ games', requirement: player => (player.wins || 0) >= 10 },
+            { id: 'winner-bronze', name: 'Victorious', tier: 'bronze', description: 'Win 5+ games', requirement: player => (player.wins || 0) >= 5 }
+        ];
+        
+        function checkPlayerAchievements(player) {
+            if (!player) return [];
+            
+            return achievements.filter(achievement => achievement.requirement(player));
+        }
+        
+        function renderAchievementsTab() {
+            const playerAchievementsEl = document.getElementById('playerAchievements');
+            playerAchievementsEl.innerHTML = '';
+            
+            const searchTerm = document.getElementById('searchAchievementsPlayers')?.value?.toLowerCase() || '';
+            
+            // Filter players with achievements
+            const playersWithAchievements = allPlayers
+                .filter(player => player.name.toLowerCase().includes(searchTerm))
+                .map(player => {
+                    const earnedAchievements = checkPlayerAchievements(player);
+                    return { player, achievements: earnedAchievements };
+                })
+                .filter(item => item.achievements.length > 0)
+                .sort((a, b) => b.achievements.length - a.achievements.length);
+            
+            // Render summary
+            const achievementStatsEl = document.getElementById('achievementStats');
+            if (achievementStatsEl) {
+                const totalAchievements = playersWithAchievements.reduce((sum, item) => sum + item.achievements.length, 0);
+                const goldCount = playersWithAchievements.reduce((sum, item) => 
+                    sum + item.achievements.filter(a => a.tier === 'gold').length, 0);
+                
+                achievementStatsEl.innerHTML = `
+                    <p>Total Achievements Earned: <strong>${totalAchievements}</strong></p>
+                    <p>Gold Achievements: <strong>${goldCount}</strong></p>
+                    <p>Players with Achievements: <strong>${playersWithAchievements.length}</strong></p>
+                `;
+            }
+            
+            // Render individual player achievements
+            playersWithAchievements.forEach(item => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'match-item';
+                
+                const achievementsHtml = item.achievements.map(achievement => 
+                    `<span class="achievement ${achievement.tier}" title="${achievement.description}">
+                        ${achievement.name}
+                    </span>`
+                ).join('');
+                
+                playerCard.innerHTML = `
+                    <h3>${item.player.name}</h3>
+                    <p>Achievements: ${item.achievements.length}</p>
+                    <div class="player-achievements">
+                        ${achievementsHtml}
+                    </div>
+                `;
+                
+                playerAchievementsEl.appendChild(playerCard);
+            });
+            
+            if (playersWithAchievements.length === 0) {
+                playerAchievementsEl.innerHTML = '<p>No achievements earned yet. Play more games to unlock achievements!</p>';
+            }
+        }
+        
+        // Player Development Tracking
+        function initPlayerDevelopment() {
+            const playerSelect = document.getElementById('developmentPlayer');
+            if (!playerSelect) return;
+            
+            // Clear existing options
+            playerSelect.innerHTML = '<option value="">Choose a player</option>';
+            
+            // Add player options
+            allPlayers.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = player.name;
+                playerSelect.appendChild(option);
+            });
+            
+            // Add event listener to view button
+            const viewButton = document.getElementById('viewDevelopment');
+            if (viewButton) {
+                viewButton.addEventListener('click', () => {
+                    const selectedPlayerId = playerSelect.value;
+                    if (selectedPlayerId) {
+                        showPlayerDevelopment(selectedPlayerId);
+                    } else {
+                        alert('Please select a player first');
+                    }
+                });
+            }
+        }
+        
+        function showPlayerDevelopment(playerId) {
+            const player = allPlayers.find(p => p.id == playerId);
+            if (!player) return;
+            
+            // Initialize player history if it doesn't exist
+            if (!player.history) {
+                player.history = [
+                    {
+                        date: new Date(Date.now() - 30*24*60*60*1000).toISOString(), // 30 days ago
+                        rating: Math.max(1, player.rating - 0.5),
+                        goals: Math.max(0, (player.goals || 0) - 2),
+                        assists: Math.max(0, (player.assists || 0) - 1),
+                        matches: Math.max(0, (player.matches || 0) - 3)
+                    },
+                    {
+                        date: new Date(Date.now() - 15*24*60*60*1000).toISOString(), // 15 days ago
+                        rating: Math.max(1, player.rating - 0.2),
+                        goals: Math.max(0, (player.goals || 0) - 1),
+                        assists: (player.assists || 0),
+                        matches: Math.max(0, (player.matches || 0) - 1)
+                    },
+                    {
+                        date: new Date().toISOString(), // Today
+                        rating: player.rating,
+                        goals: (player.goals || 0),
+                        assists: (player.assists || 0),
+                        matches: (player.matches || 0)
+                    }
+                ];
+                savePlayersToStorage();
+            }
+            
+            // Create development chart
+            renderDevelopmentChart(player);
+            
+            // Show development summary
+            const summaryEl = document.getElementById('developmentSummary');
+            if (summaryEl) {
+                // Calculate improvements
+                const oldestRecord = player.history[0];
+                const latestRecord = player.history[player.history.length - 1];
+                
+                const ratingChange = (latestRecord.rating - oldestRecord.rating).toFixed(1);
+                const ratingDirection = ratingChange >= 0 ? 'increased' : 'decreased';
+                
+                summaryEl.innerHTML = `
+                    <h3>${player.name}'s Development Summary</h3>
+                    <p><strong>Current Rating:</strong> ${player.rating}/10</p>
+                    <p><strong>Rating Change:</strong> ${ratingChange >= 0 ? '+' : ''}${ratingChange} 
+                       (${ratingDirection} by ${Math.abs(ratingChange)})</p>
+                    <p><strong>Matches Played:</strong> ${player.matches || 0}</p>
+                    <p><strong>Goals Scored:</strong> ${player.goals || 0}</p>
+                    <p><strong>Assists:</strong> ${player.assists || 0}</p>
+                    <p><strong>Position:</strong> ${formatDetailedPosition(player.detailedPosition || 'forward')}</p>
+                    <p><strong>Style:</strong> ${formatStyle(player.style || 'balanced')}</p>
+                `;
+            }
+            
+            // Show milestones
+            const milestonesEl = document.getElementById('developmentMilestones');
+            if (milestonesEl) {
+                const achievements = checkPlayerAchievements(player);
+                
+                if (achievements.length > 0) {
+                    milestonesEl.innerHTML = achievements.map(achievement => 
+                        `<li class="${achievement.tier}">
+                            ${achievement.name} - ${achievement.description}
+                        </li>`
+                    ).join('');
+                } else {
+                    milestonesEl.innerHTML = '<li>No milestones achieved yet</li>';
+                }
+            }
+        }
+        
+        function renderDevelopmentChart(player) {
+            const ctx = document.getElementById('developmentChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            // Prepare chart data
+            const dates = player.history.map(record => new Date(record.date).toLocaleDateString());
+            const ratings = player.history.map(record => record.rating);
+            const goals = player.history.map(record => record.goals || 0);
+            const assists = player.history.map(record => record.assists || 0);
+            
+            // Create chart
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Rating',
+                            data: ratings,
+                            borderColor: '#2196f3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            yAxisID: 'y-rating',
+                            tension: 0.2,
+                            fill: true
+                        },
+                        {
+                            label: 'Goals',
+                            data: goals,
+                            borderColor: '#f44336',
+                            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                            yAxisID: 'y-stats',
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Assists',
+                            data: assists,
+                            borderColor: '#4caf50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            yAxisID: 'y-stats',
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        'y-rating': {
+                            type: 'linear',
+                            position: 'left',
+                            min: 0,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Rating'
+                            }
+                        },
+                        'y-stats': {
+                            type: 'linear',
+                            position: 'right',
+                            min: 0,
+                            title: {
+                                display: true,
+                                text: 'Goals/Assists'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Export/Import System
+        function initExportImport() {
+            // Export data
+            const exportBtn = document.getElementById('exportData');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportData);
+            }
+            
+            // Import data
+            const importBtn = document.getElementById('importData');
+            if (importBtn) {
+                importBtn.addEventListener('click', importData);
+            }
+            
+            // Manual backup
+            const backupBtn = document.getElementById('manualBackup');
+            if (backupBtn) {
+                backupBtn.addEventListener('click', () => {
+                    savePlayersToStorage();
+                    updateLastBackupTime();
+                    alert('Data backed up successfully!');
+                });
+            }
+            
+            // Show last backup time
+            updateLastBackupTime();
+        }
+        
+        function exportData() {
+            const dataExport = {
+                players: allPlayers,
+                matches: allMatches || [],
+                appVersion: '1.0',
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(dataExport, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'football_team_data.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        function importData() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                return alert('Please select a file to import');
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (!importedData.players || !Array.isArray(importedData.players)) {
+                        return alert('Invalid data format: Players data not found');
+                    }
+                    
+                    // Confirm before replacing data
+                    if (confirm(`This will replace your current data with ${importedData.players.length} players. Continue?`)) {
+                        allPlayers = importedData.players;
+                        allMatches = importedData.matches || [];
+                        
+                        savePlayersToStorage();
+                        updateLastBackupTime();
+                        
+                        // Refresh UI
+                        renderPlayerList();
+                        updatePlayerCount();
+                        
+                        alert('Data imported successfully!');
+                    }
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function updateLastBackupTime() {
+            const lastBackupEl = document.getElementById('lastBackup');
+            if (lastBackupEl) {
+                const lastBackup = localStorage.getItem('lastBackup');
+                if (lastBackup) {
+                    lastBackupEl.textContent = new Date(parseInt(lastBackup)).toLocaleString();
+                } else {
+                    lastBackupEl.textContent = 'Never';
+                }
+            }
+        }
+        
+        // Field Visualizer
+        function initFieldVisualizer() {
+            const visualizeTeamABtn = document.getElementById('visualizeTeamA');
+            const visualizeTeamBBtn = document.getElementById('visualizeTeamB');
+            const visualizeBothBtn = document.getElementById('visualizeBoth');
+            const clearFieldBtn = document.getElementById('clearField');
+            
+            if (visualizeTeamABtn) {
+                visualizeTeamABtn.addEventListener('click', () => visualizeTeam('A'));
+            }
+            
+            if (visualizeTeamBBtn) {
+                visualizeTeamBBtn.addEventListener('click', () => visualizeTeam('B'));
+            }
+            
+            if (visualizeBothBtn) {
+                visualizeBothBtn.addEventListener('click', () => visualizeTeam('both'));
+            }
+            
+            if (clearFieldBtn) {
+                clearFieldBtn.addEventListener('click', clearField);
+            }
+        }
+        
+        function visualizeTeam(team) {
+            clearField();
+            
+            const fieldPlayersEl = document.getElementById('fieldPlayers');
+            if (!fieldPlayersEl) return;
+            
+            let players = [];
+            
+            if (team === 'A' || team === 'both') {
+                players = players.concat(teamA.starters.map(player => ({...player, team: 'A'})));
+            }
+            
+            if (team === 'B' || team === 'both') {
+                players = players.concat(teamB.starters.map(player => ({...player, team: 'B'})));
+            }
+            
+            // Define default positions based on player roles
+            const defaultPositions = {
+                'goalkeeper': {x: 10, y: 50},
+                'defender': {x: 30, y: 50},
+                'midfielder': {x: 50, y: 50},
+                'forward': {x: 70, y: 50},
+                'multipraktik': {x: 60, y: 50}
+            };
+            
+            // Add player markers to the field
+            players.forEach((player, index) => {
+                const position = defaultPositions[player.detailedPosition || 'forward'];
+                
+                // Adjust Y position to spread players vertically
+                let yPos = position.y;
+                if (players.filter(p => p.detailedPosition === player.detailedPosition).length > 1) {
+                    const playerIndex = players.filter(p => p.detailedPosition === player.detailedPosition).indexOf(player);
+                    yPos = 30 + (playerIndex * 40);
+                }
+                
+                // Team A plays left to right, Team B plays right to left
+                let xPos = position.x;
+                if (player.team === 'B') {
+                    xPos = 100 - position.x;
+                }
+                
+                const marker = document.createElement('div');
+                marker.className = `player-marker team-${player.team.toLowerCase()}-marker`;
+                marker.textContent = player.name.split(' ')[0]; // First name only
+                marker.style.left = `${xPos}%`;
+                marker.style.top = `${yPos}%`;
+                marker.setAttribute('data-player-id', player.id);
+                marker.setAttribute('data-team', player.team);
+                
+                // Make markers draggable
+                marker.setAttribute('draggable', 'true');
+                marker.addEventListener('dragstart', handleDragStart);
+                
+                fieldPlayersEl.appendChild(marker);
+            });
+            
+            // Make the field droppable
+            const pitchEl = document.querySelector('.football-pitch');
+            if (pitchEl) {
+                pitchEl.addEventListener('dragover', handleDragOver);
+                pitchEl.addEventListener('drop', handleDrop);
+            }
+        }
+        
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.getAttribute('data-player-id'));
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            const playerId = e.dataTransfer.getData('text/plain');
+            const marker = document.querySelector(`.player-marker[data-player-id="${playerId}"]`);
+            
+            if (marker) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                marker.style.left = `${x}%`;
+                marker.style.top = `${y}%`;
+            }
+        }
+        
+        function clearField() {
+            const fieldPlayersEl = document.getElementById('fieldPlayers');
+            if (fieldPlayersEl) {
+                fieldPlayersEl.innerHTML = '';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Existing initialization...
+            
+            // Initialize new features
+            initPlayerDevelopment();
+            initExportImport();
+            initFieldVisualizer();
+            
+            // Add event listeners for new tabs
+            const searchAchievementsEl = document.getElementById('searchAchievementsPlayers');
+            if (searchAchievementsEl) {
+                searchAchievementsEl.addEventListener('input', renderAchievementsTab);
+            }
+            
+            // Set up storage for backup tracking
+            if (!localStorage.getItem('lastBackup')) {
+                localStorage.setItem('lastBackup', Date.now().toString());
+            }
+            
+            // Override savePlayersToStorage to update backup time
+            const originalSaveFunction = savePlayersToStorage;
+            savePlayersToStorage = function() {
+                originalSaveFunction();
+                localStorage.setItem('lastBackup', Date.now().toString());
+                updateLastBackupTime();
+            };
+            
+            // Update tab handlers for new tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.dataset.tab;
+                    
+                    // Remove active class from all tabs and content
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to selected tab and content
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // Special initialization for specific tabs
+                    if (tabId === 'achievements') {
+                        renderAchievementsTab();
+                    } else if (tabId === 'player-development') {
+                        initPlayerDevelopment();
+                    } else if (tabId === 'chemistry') {
+                        // Initialize chemistry tab
+                    } else if (tabId === 'field') {
+                        // Already initialized
+                    } else if (tabId === 'tournament') {
+                        // Initialize tournament tab
+                    }
+                });
+            });
+        });
+        
+        // Edit Player Functions
+        function openEditModal(playerId) {
+            const player = allPlayers.find(p => p.id === playerId);
+            if (!player) return;
+            
+            // Fill form with player data
+            document.getElementById('editPlayerId').value = player.id;
+            document.getElementById('editPlayerName').value = player.name;
+            document.getElementById('editPlayerRating').value = player.rating;
+            document.getElementById('editPlayerPosition').value = player.position || 'field';
+            document.getElementById('editPlayerDetailedPosition').value = player.detailedPosition || 'forward';
+            document.getElementById('editPlayerStyle').value = player.style || 'balanced';
+            document.getElementById('editPlayerAttendance').value = player.attendance || 0;
+            document.getElementById('editPlayerMatches').value = player.matches || 0;
+            document.getElementById('editPlayerWins').value = player.wins || 0;
+            document.getElementById('editPlayerLosses').value = player.losses || 0;
+            document.getElementById('editPlayerDraws').value = player.draws || 0;
+            document.getElementById('editPlayerGoals').value = player.goals || 0;
+            document.getElementById('editPlayerAssists').value = player.assists || 0;
+            
+            // Show modal
+            document.getElementById('editPlayerModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editPlayerModal').style.display = 'none';
+        }
+        
+        function savePlayerEdit() {
+            const playerId = document.getElementById('editPlayerId').value;
+            const playerIndex = allPlayers.findIndex(p => p.id.toString() === playerId.toString());
+            
+            if (playerIndex === -1) return;
+            
+            // Get values from form
+            const name = document.getElementById('editPlayerName').value.trim();
+            const rating = parseFloat(document.getElementById('editPlayerRating').value);
+            const position = document.getElementById('editPlayerPosition').value;
+            const detailedPosition = document.getElementById('editPlayerDetailedPosition').value;
+            const style = document.getElementById('editPlayerStyle').value;
+            const attendance = parseInt(document.getElementById('editPlayerAttendance').value);
+            const matches = parseInt(document.getElementById('editPlayerMatches').value);
+            const wins = parseInt(document.getElementById('editPlayerWins').value);
+            const losses = parseInt(document.getElementById('editPlayerLosses').value);
+            const draws = parseInt(document.getElementById('editPlayerDraws').value);
+            const goals = parseInt(document.getElementById('editPlayerGoals').value);
+            const assists = parseInt(document.getElementById('editPlayerAssists').value);
+            
+            // Validation
+            if (!name) {
+                alert('Player name is required');
+                return;
+            }
+            
+            // Update player data
+            allPlayers[playerIndex] = {
+                ...allPlayers[playerIndex],
+                name,
+                rating,
+                position,
+                detailedPosition,
+                style,
+                attendance,
+                matches,
+                wins,
+                losses,
+                draws,
+                goals,
+                assists
+            };
+            
+            // Save and refresh
+            savePlayersToStorage();
+            renderPlayerList();
+            closeEditModal();
+            
+            // If stats tab is active, refresh it
+            if (document.getElementById('stats-tab').classList.contains('active')) {
+                renderPlayerStats();
+            }
+            
+            // If achievements tab is active, refresh it
+            if (document.getElementById('achievements-tab') && 
+                document.getElementById('achievements-tab').classList.contains('active')) {
+                renderAchievementsTab();
+            }
+            
+            // Alert user
+            alert(`${name}'s information has been updated.`);
+        }
+        
+        // Add CSS for edit button
+        document.addEventListener('DOMContentLoaded', function() {
+            const style = document.createElement('style');
+            style.textContent = `
+                .edit-btn {
+                    position: absolute;
+                    top: 5px;
+                    right: 30px;
+                    cursor: pointer;
+                    font-size: 16px;
+                }
+                
+                .edit-btn:hover {
+                    opacity: 0.7;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Handle ESC key to close modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeEditModal();
+                }
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(e) {
+                const modal = document.getElementById('editPlayerModal');
+                if (e.target === modal) {
+                    closeEditModal();
+                }
+            });
+        });
+        
+        // Utility function to format the detailed position and style
+        function formatDetailedPosition(position) {
+            const positions = {
+                'forward': 'Forward',
+                'midfielder': 'Midfielder',
+                'defender': 'Defender',
+                'multipraktik': 'Multipraktik'
+            };
+            return positions[position] || position;
+        }
+        
+        function formatStyle(style) {
+            const styles = {
+                'balanced': 'Balanced',
+                'defensive': 'Defensive',
+                'attacking': 'Attacking',
+                'playmaker': 'Playmaker',
+                'versatile': 'Versatile'
+            };
+            return styles[style] || style;
+        }
+    </script>
+</body>
+</html>

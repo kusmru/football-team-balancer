@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Team Balancer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .player-list, .team-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .player-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            position: relative;
+            width: 140px;
+        }
+        .player-card.selected {
+            background-color: #e0e0e0;
+        }
+        .player-card.goalkeeper {
+            background-color: #ffecb3;
+        }
+        .team {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 200px;
+            background-color: #f5f5f5;
+        }
+        .team-a {
+            background-color: #e3f2fd;
+        }
+        .team-b {
+            background-color: #ffebee;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .form {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+        .form div {
+            margin-bottom: 10px;
+        }
+        .stats {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            color: red;
+            font-size: 16px;
+        }
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .team-title {
+            margin: 0;
+        }
+        .player-section {
+            margin-top: 10px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, select {
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .search-box {
+            margin-bottom: 15px;
+        }
+        .instructions {
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Football Team Balancer</h1>
+    
+    <div class="instructions">
+        <p><strong>How to use:</strong> Add all your players with their skill ratings. Before each game, select the available players and click "Balance Teams" to create fair teams automatically.</p>
+    </div>
+    
+    <div class="form">
+        <h2>Add Player</h2>
+        <div>
+            <label for="playerName">Name:</label>
+            <input type="text" id="playerName">
+        </div>
+        <div>
+            <label for="playerRating">Skill Rating (1-10):</label>
+            <input type="number" id="playerRating" min="1" max="10" value="5">
+        </div>
+        <div>
+            <label for="playerPosition">Primary Position:</label>
+            <select id="playerPosition">
+                <option value="field">Field Player</option>
+                <option value="goalkeeper">Goalkeeper</option>
+                <option value="both">Both</option>
+            </select>
+        </div>
+        <button id="addPlayer">Add Player</button>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchPlayers" placeholder="Search players...">
+    </div>
+
+    <h2>Player Database (<span id="playerCount">0</span>)</h2>
+    <div class="player-list" id="playerList"></div>
+    
+    <div class="controls">
+        <button id="selectAttendees">Select Who's Playing Today</button>
+        <button id="clearSelection">Clear Selection</button>
+        <button id="balanceTeams">Balance Teams</button>
+        <button id="resetTeams">Reset Teams</button>
+        <button id="saveToFile">Export Player Database</button>
+        <button id="loadFromFile">Import Player Database</button>
+        <input type="file" id="fileInput" style="display: none">
+    </div>
+    
+    <h2>Teams</h2>
+    <div class="team-container">
+        <div class="team team-a" id="teamA">
+            <div class="team-header">
+                <h3 class="team-title">Team A</h3>
+            </div>
+            <div class="player-section">
+                <div class="section-title">Starting Players</div>
+                <div id="teamAStarters"></div>
+            </div>
+            <div class="player-section">
+                <div class="section-title">Reserves</div>
+                <div id="teamAReserves"></div>
+            </div>
+            <div class="stats" id="teamAStats"></div>
+        </div>
+        <div class="team team-b" id="teamB">
+            <div class="team-header">
+                <h3 class="team-title">Team B</h3>
+            </div>
+            <div class="player-section">
+                <div class="section-title">Starting Players</div>
+                <div id="teamBStarters"></div>
+            </div>
+            <div class="player-section">
+                <div class="section-title">Reserves</div>
+                <div id="teamBReserves"></div>
+            </div>
+            <div class="stats" id="teamBStats"></div>
+        </div>
+    </div>
+
+    <script>
+        // Player database
+        let allPlayers = JSON.parse(localStorage.getItem('footballPlayers')) || [];
+        let selectedPlayers = [];
+        let teamA = {
+            starters: [],
+            reserves: []
+        };
+        let teamB = {
+            starters: [],
+            reserves: []
+        };
+        
+        // DOM elements
+        const playerListEl = document.getElementById('playerList');
+        const teamAStartersEl = document.getElementById('teamAStarters');
+        const teamBStartersEl = document.getElementById('teamBStarters');
+        const teamAReservesEl = document.getElementById('teamAReserves');
+        const teamBReservesEl = document.getElementById('teamBReserves');
+        const teamAStatsEl = document.getElementById('teamAStats');
+        const teamBStatsEl = document.getElementById('teamBStats');
+        const playerCountEl = document.getElementById('playerCount');
+        const searchEl = document.getElementById('searchPlayers');
+        const fileInputEl = document.getElementById('fileInput');
+        
+        // Initialize
+        renderPlayerList();
+        updatePlayerCount();
+        
+        // Event Listeners
+        document.getElementById('addPlayer').addEventListener('click', addPlayer);
+        document.getElementById('selectAttendees').addEventListener('click', toggleSelectMode);
+        document.getElementById('clearSelection').addEventListener('click', clearSelection);
+        document.getElementById('balanceTeams').addEventListener('click', balanceTeams);
+        document.getElementById('resetTeams').addEventListener('click', resetTeams);
+        document.getElementById('saveToFile').addEventListener('click', saveToFile);
+        document.getElementById('loadFromFile').addEventListener('click', () => fileInputEl.click());
+        fileInputEl.addEventListener('change', loadFromFile);
+        searchEl.addEventListener('input', filterPlayers);
+        
+        // Functions
+        function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            const rating = parseInt(document.getElementById('playerRating').value);
+            const position = document.getElementById('playerPosition').value;
+            
+            if (!name) return alert('Please enter a player name');
+            
+            const player = {
+                id: Date.now(),
+                name: name,
+                rating: rating,
+                position: position
+            };
+            
+            allPlayers.push(player);
+            savePlayersToStorage();
+            renderPlayerList();
+            updatePlayerCount();
+            
+            // Clear form
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerRating').value = 5;
+            document.getElementById('playerPosition').value = 'field';
+        }
+        
+        function renderPlayerList() {
+            playerListEl.innerHTML = '';
+            
+            const searchTerm = searchEl.value.toLowerCase();
+            const filteredPlayers = searchTerm 
+                ? allPlayers.filter(p => p.name.toLowerCase().includes(searchTerm))
+                : allPlayers;
+            
+            filteredPlayers.sort((a, b) => a.name.localeCompare(b.name));
+            
+            filteredPlayers.forEach(player => {
+                const playerCard = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                playerCard.className = `player-card${isGoalkeeper ? ' goalkeeper' : ''}${selectedPlayers.some(p => p.id === player.id) ? ' selected' : ''}`;
+                playerCard.innerHTML = `
+                    <span class="delete-btn" data-id="${player.id}">×</span>
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                `;
+                
+                playerCard.addEventListener('click', () => togglePlayerSelection(player));
+                playerListEl.appendChild(playerCard);
+                
+                // Delete button
+                const deleteBtn = playerCard.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePlayer(player.id);
+                });
+            });
+        }
+        
+        function formatPosition(position) {
+            switch(position) {
+                case 'goalkeeper': return 'Goalkeeper';
+                case 'field': return 'Field Player';
+                case 'both': return 'Field/Goalkeeper';
+                default: return position;
+            }
+        }
+        
+        function togglePlayerSelection(player) {
+            const index = selectedPlayers.findIndex(p => p.id === player.id);
+            
+            if (index === -1) {
+                selectedPlayers.push(player);
+            } else {
+                selectedPlayers.splice(index, 1);
+            }
+            
+            renderPlayerList();
+        }
+        
+        function deletePlayer(id) {
+            if (confirm('Are you sure you want to delete this player?')) {
+                allPlayers = allPlayers.filter(p => p.id !== id);
+                selectedPlayers = selectedPlayers.filter(p => p.id !== id);
+                savePlayersToStorage();
+                renderPlayerList();
+                renderTeams();
+                updatePlayerCount();
+            }
+        }
+        
+        function toggleSelectMode() {
+            alert('Click on players to select who is playing today, then press "Balance Teams"');
+        }
+        
+        function clearSelection() {
+            selectedPlayers = [];
+            renderPlayerList();
+        }
+        
+        function balanceTeams() {
+            if (selectedPlayers.length < 6) {
+                return alert('Please select at least 6 players (minimum for 3v3)');
+            }
+            
+            // Reset teams
+            teamA = {
+                starters: [],
+                reserves: []
+            };
+            teamB = {
+                starters: [],
+                reserves: []
+            };
+            
+            // Sort by rating, highest first
+            const sortedPlayers = [...selectedPlayers].sort((a, b) => b.rating - a.rating);
+            
+            // Separate goalkeepers
+            const goalkeepers = sortedPlayers.filter(p => p.position === 'goalkeeper' || p.position === 'both');
+            let fieldPlayers = sortedPlayers.filter(p => p.position === 'field' || (p.position === 'both' && goalkeepers.length > 2));
+            
+            // Add goalkeeper-capable players to fieldPlayers if not needed as goalkeepers
+            if (goalkeepers.length > 2) {
+                const excessKeepers = goalkeepers.slice(2);
+                fieldPlayers = [...fieldPlayers, ...excessKeepers];
+            }
+            
+            // Assign goalkeepers first, one to each team if available
+            if (goalkeepers.length >= 2) {
+                teamA.starters.push(goalkeepers[0]);
+                teamB.starters.push(goalkeepers[1]);
+            } else if (goalkeepers.length === 1) {
+                teamA.starters.push(goalkeepers[0]);
+                alert('Warning: Only one goalkeeper available. Team B will need an outfield player as goalkeeper.');
+            } else {
+                alert('Warning: No goalkeepers available. Both teams will need outfield players as goalkeepers.');
+            }
+            
+            // Sort field players again by rating
+            fieldPlayers.sort((a, b) => b.rating - a.rating);
+            
+            // Determine how many players per team (5 outfield + reserves)
+            const playersPerTeam = Math.floor(fieldPlayers.length / 2);
+            
+            // Distribute field players using alternating selection (snake draft)
+            for (let i = 0; i < fieldPlayers.length; i++) {
+                const player = fieldPlayers[i];
+                const teamASize = teamA.starters.length + teamA.reserves.length;
+                const teamBSize = teamB.starters.length + teamB.reserves.length;
+                
+                // Determine which team gets the player
+                let targetTeam;
+                if (teamASize < teamBSize) {
+                    targetTeam = teamA;
+                } else if (teamBSize < teamASize) {
+                    targetTeam = teamB;
+                } else {
+                    // If teams are equal size, alternate (snake draft)
+                    targetTeam = i % 2 === 0 ? teamA : teamB;
+                }
+                
+                // Add to starters or reserves based on team size
+                if ((targetTeam === teamA && teamA.starters.length < 6) || 
+                    (targetTeam === teamB && teamB.starters.length < 6)) {
+                    targetTeam.starters.push(player);
+                } else {
+                    targetTeam.reserves.push(player);
+                }
+            }
+            
+            renderTeams();
+        }
+        
+        function renderTeams() {
+            renderTeamSection(teamA.starters, teamAStartersEl, true);
+            renderTeamSection(teamB.starters, teamBStartersEl, true);
+            renderTeamSection(teamA.reserves, teamAReservesEl, false);
+            renderTeamSection(teamB.reserves, teamBReservesEl, false);
+            
+            updateTeamStats(teamA, teamAStatsEl);
+            updateTeamStats(teamB, teamBStatsEl);
+        }
+        
+        function renderTeamSection(players, container, isStarters) {
+            container.innerHTML = '';
+            
+            if (players.length === 0) {
+                container.innerHTML = '<p>No players assigned</p>';
+                return;
+            }
+            
+            players.forEach(player => {
+                const playerEl = document.createElement('div');
+                const isGoalkeeper = player.position === 'goalkeeper' || player.position === 'both';
+                playerEl.className = isGoalkeeper ? 'player-card goalkeeper' : 'player-card';
+                playerEl.innerHTML = `
+                    <strong>${player.name}</strong> 
+                    <br>Rating: ${player.rating}/10
+                    <br>Position: ${formatPosition(player.position)}
+                `;
+                container.appendChild(playerEl);
+            });
+        }
+        
+        function updateTeamStats(team, statsContainer) {
+            const allTeamPlayers = [...team.starters, ...team.reserves];
+            if (allTeamPlayers.length === 0) {
+                statsContainer.innerHTML = '';
+                return;
+            }
+            
+            const totalRating = getTotalRating(allTeamPlayers);
+            const avgRating = totalRating / allTeamPlayers.length;
+            const starterRating = getTotalRating(team.starters);
+            const starterAvg = team.starters.length > 0 ? starterRating / team.starters.length : 0;
+            
+            statsContainer.innerHTML = `
+                Total Players: ${allTeamPlayers.length} | 
+                Average Rating: ${avgRating.toFixed(1)} | 
+                Starters Avg: ${starterAvg.toFixed(1)}
+            `;
+        }
+        
+        function getTotalRating(players) {
+            return players.reduce((sum, player) => sum + player.rating, 0);
+        }
+        
+        function resetTeams() {
+            teamA = {
+                starters: [],
+                reserves: []
+            };
+            teamB = {
+                starters: [],
+                reserves: []
+            };
+            renderTeams();
+        }
+        
+        function savePlayersToStorage() {
+            localStorage.setItem('footballPlayers', JSON.stringify(allPlayers));
+        }
+        
+        function updatePlayerCount() {
+            playerCountEl.textContent = allPlayers.length;
+        }
+        
+        function filterPlayers() {
+            renderPlayerList();
+        }
+        
+        function saveToFile() {
+            const data = JSON.stringify(allPlayers, null, 2);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'football_players.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function loadFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedPlayers = JSON.parse(e.target.result);
+                    if (Array.isArray(importedPlayers)) {
+                        if (confirm(`Import ${importedPlayers.length} players? This will replace your current database.`)) {
+                            allPlayers = importedPlayers;
+                            savePlayersToStorage();
+                            renderPlayerList();
+                            updatePlayerCount();
+                            alert('Player database imported successfully!');
+                        }
+                    } else {
+                        alert('Invalid file format. Please use a proper JSON export.');
+                    }
+                } catch (error) {
+                    alert('Error importing file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            fileInputEl.value = '';
+        }
+    </script>
+</body>
+</html>
